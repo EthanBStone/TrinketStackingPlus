@@ -15,7 +15,6 @@ Extension cord laser: Subtype 2
 Bugs:
 *Fish head might be spawning more flies than it should?
 *Apple of sodom might be a bit buggy
-*Move Wooden cross effect to on room cleared
 
 Current Interactions:
 *All "Locust of" trinkets work properly. Each extra multiplier give a 75% chance to spawn an extra locust
@@ -58,10 +57,16 @@ Current Interactions:
 
 *Hairpin: Killing the boss room boss drops a battery
 
+*Equality: Picking up a consumable gives a chance to spawn the consumable type that Isaac has the least of
+
+*Crow Heart: Change to convert incoming damage into "fake" damage like dull razor
 ****BUGS
 *Continuing the run with fish tail will give you a chance to duplicate flies/spiders
 *Wooden Cross's shield will stay on isaac when you drop it after it replenishes via holy card trigger
 *Store key, vibrant/dim bulbs damage is not affected by dmg multipliers like soy milk or polyphemus
+
+*Do some more testing w rotten penny and apple of sodom to make sure they arent broken
+
 ]]--
 
 TrinketStacking.DEBUG = 0 --ENABLES DEBUG MODE! Make sure this is 0 unless you are testing the mod
@@ -604,56 +609,8 @@ function TrinketStacking:onCacheEval(player, cacheFlag)
 end
 
 function TrinketStacking:onPlayerUpdate(player) 
-	--Apple of sodom code
-	if player:GetTrinketMultiplier(TrinketType.TRINKET_APPLE_OF_SODOM) > 1 then	
-		for pIndex, pickup in pairs(Isaac.FindInRadius(player.Position, 10, EntityPartition.PICKUP)) do
-			if pickup.Variant == PickupVariant.PICKUP_HEART and pickup:GetData().Stack_Sodom ~= 1 and pickup:GetSprite():GetAnimation() == "Idle" then		
-				pickup:GetSprite():Play("Collect", true)
-				pickup:GetData().Stack_Sodom = 1
-				local appleSpiderRolls = 0
-				--Half heart
-				if pickup.SubType == HeartSubType.HEART_HALF then
-					appleSpiderRolls = 1 * (player:GetTrinketMultiplier(TrinketType.TRINKET_APPLE_OF_SODOM) - 1)
-				--Full heart
-				elseif pickup.SubType == HeartSubType.HEART_FULL then
-					appleSpiderRolls = 1 *(player:GetTrinketMultiplier(TrinketType.TRINKET_APPLE_OF_SODOM) - 1)
-				--Double heart
-				elseif pickup.SubType == HeartSubType.HEART_DOUBLEPACK then
-					appleSpiderRolls = 2 *(player:GetTrinketMultiplier(TrinketType.TRINKET_APPLE_OF_SODOM) - 1)
-				end
 
-				--print("Spider Rolls: " .. appleSpiderRolls)
-				rng = player:GetTrinketRNG(TrinketType.TRINKET_APPLE_OF_SODOM)
-				for spiderNum = 1, appleSpiderRolls do
-					rngRoll = rng:RandomInt(100)
-					if rngRoll < 50 then 
-						player:AddBlueSpider(player.Position)
-					end
-					
 
-				end
-				
-				
-				
-			end
-			
-		end	
-	end
-	--Rotten Penny code
-	if player:GetTrinketMultiplier(TrinketType.TRINKET_ROTTEN_PENNY) > 1 then
-		for pIndex, pickup in pairs(Isaac.FindInRadius(player.Position, 10, EntityPartition.PICKUP)) do
-			if pickup.Variant == PickupVariant.PICKUP_COIN and pickup:GetData().ROTTEN_PENNY_CHECK ~= 1 and pickup:GetSprite():GetAnimation() == "Collect" then		
-				pickup:GetData().ROTTEN_PENNY_CHECK = 1
-				rng = player:GetTrinketRNG(TrinketType.TRINKET_ROTTEN_PENNY)
-				rngRoll = rng:RandomInt(100)
-				rngChance = (30 + 20 * (player:GetTrinketMultiplier(TrinketType.TRINKET_ROTTEN_PENNY) - 1) )
-				--print("Roll: " .. rngRoll .. "|" .. rngChance)	
-				if rngRoll <= rngChance then 
-					player:AddBlueFlies(1, player.Position, player )
-				end				
-			end
-		end
-	end
 end
 
 --Chance to add addition flies/spiders with Fish Tail
@@ -738,6 +695,20 @@ function TrinketStacking:onPlayerHurt(player, dmg, flags, dmgSource, cdFrames)
 			end
 		end
 	end
+
+	--Crow's Heart code
+	if (flags & DamageFlag.DAMAGE_FAKE) == 0 then
+		if player:GetTrinketMultiplier(TrinketType.TRINKET_CROW_HEART) > 1 then
+			rng = player:GetTrinketRNG(TrinketType.TRINKET_CROW_HEART)
+			rngRoll = rng:RandomInt(100)
+			rngChance = 20 + (5 * (player:GetTrinketMultiplier(TrinketType.TRINKET_CROW_HEART) - 1))
+			--print("Fake dmg: " .. rngRoll .. "|" .. rngChance)
+			if rngRoll <= rngChance then
+				player:TakeDamage(0, DamageFlag.DAMAGE_FAKE, EntityRef(player), 9999)
+				return false
+			end
+		end	
+	end
 end
 
 --Store key code
@@ -776,6 +747,174 @@ function TrinketStacking:onNPCDeath(enemy)
 	end
 end
 
+
+--On Coin pickup, for rotten penny
+function TrinketStacking:onCoinPickup(pickup, ent, bool)
+	if ent.Type == EntityType.ENTITY_PLAYER then
+		player = ent:ToPlayer()
+		--Rotten Penny code
+		if player:GetTrinketMultiplier(TrinketType.TRINKET_ROTTEN_PENNY) > 1 then
+			rng = player:GetTrinketRNG(TrinketType.TRINKET_ROTTEN_PENNY)
+			rngRoll = rng:RandomInt(100)
+			rngChance = (30 + 20 * (player:GetTrinketMultiplier(TrinketType.TRINKET_ROTTEN_PENNY) - 1) )
+			--print("Roll: " .. rngRoll .. "|" .. rngChance)	
+			if rngRoll <= rngChance then 
+				player:AddBlueFlies(1, player.Position, player )
+			end		
+		end	
+	end
+
+
+end
+
+--On heart pickup, for apple of sodom
+function TrinketStacking:onHeartPickup(pickup, ent, bool)
+	if ent.Type == EntityType.ENTITY_PLAYER then
+		player = ent:ToPlayer()
+		--Apple of sodom code
+		if player:GetTrinketMultiplier(TrinketType.TRINKET_APPLE_OF_SODOM) > 1 then		
+			--You get more chances at extra spiders if the heart is of greater value
+			local appleSpiderRolls = 0
+			--Half heart
+			if pickup.SubType == HeartSubType.HEART_HALF then
+				appleSpiderRolls = 1 * (player:GetTrinketMultiplier(TrinketType.TRINKET_APPLE_OF_SODOM) - 1)
+			--Full heart
+			elseif pickup.SubType == HeartSubType.HEART_FULL then
+				appleSpiderRolls = 2 *(player:GetTrinketMultiplier(TrinketType.TRINKET_APPLE_OF_SODOM) - 1)
+			--Double heart
+			elseif pickup.SubType == HeartSubType.HEART_DOUBLEPACK then
+				appleSpiderRolls = 3 *(player:GetTrinketMultiplier(TrinketType.TRINKET_APPLE_OF_SODOM) - 1)
+			end
+			--print("Spider Rolls: " .. appleSpiderRolls)
+			rng = player:GetTrinketRNG(TrinketType.TRINKET_APPLE_OF_SODOM)
+			for spiderNum = 1, appleSpiderRolls do
+				rngRoll = rng:RandomInt(100)
+				--print("Roll: " .. rngRoll .. "|" .. "50")
+				if rngRoll < 50 then 
+					player:AddBlueSpider(player.Position)
+				end
+			end				
+		end		
+	end		
+end
+
+
+
+--Helper function for equality
+function TrinketStacking:getLowestConsumable()
+	player = game:GetPlayer(1)
+	local consumables = {
+		{variant = PickupVariant.PICKUP_BOMB,count = player:GetNumBombs()},
+		{variant = PickupVariant.PICKUP_KEY, count = player:GetNumKeys()},
+		{variant = PickupVariant.PICKUP_COIN,count = player:GetNumCoins()},
+	}
+	
+	local minConsumable = consumables[1]
+	if consumables[1].count == consumables[2].count and consumables[1].count == consumables[3].count then
+		--print("All Equal")
+		return nil
+	else
+		for i, pickup in pairs(consumables) do
+			if pickup.count < minConsumable.count then
+				minConsumable = pickup 
+			end
+		end	
+		--print("Lowest consumable: " .. minConsumable.variant)
+		return minConsumable.variant
+	end
+
+	
+
+	
+	
+end
+
+--Only for equality
+function TrinketStacking:onEqualityPickup(pickup, ent, bool)
+	if ent.Type == EntityType.ENTITY_PLAYER then
+		player = ent:ToPlayer()
+		if player:GetTrinketMultiplier(TrinketType.TRINKET_EQUALITY) > 1 then
+			dropVariant = TrinketStacking.getLowestConsumable()
+			if dropVariant ~= nil then
+				--Do extra drop
+				rng = player:GetTrinketRNG(TrinketType.TRINKET_EQUALITY)
+				rngRoll = rng:RandomInt(100)
+				--20% chance per extra multiplier of equality
+				rngChance = 20 * (player:GetTrinketMultiplier(TrinketType.TRINKET_EQUALITY) - 1)
+				print("Equality Roll: " .. rngRoll .. "|" .. rngChance)
+				if rngRoll <= rngChance then
+					loot = Isaac.Spawn(EntityType.ENTITY_PICKUP, dropVariant, 0, player.Position, Vector(-5 + rng:RandomInt(10),-5 + rng:RandomInt(10)), nil)
+				end
+				
+			end
+		end
+	
+	
+	end
+end
+
+--For Store credit
+function TrinketStacking:onShopPickup(pickup, ent, bool)
+	if ent.Type == EntityType.ENTITY_PLAYER then
+		player = ent:ToPlayer()
+		--Store Credit code
+		--print("is shop item")
+		if pickup:IsShopItem() then
+			print("IsShop True")
+			print("Price: " .. pickup.Price)
+			edgecase = false
+			--Hearts Edgecase
+			if pickup.Variant == PickupVariant.PICKUP_HEART then
+				if pickup.SubType == HeartSubType.HEART_FULL or pickup.SubType == HeartSubType.HEART_HALF or pickup.SubType == HeartSubType.HEART_ROTTEN or pickup.SubType == HeartSubType.HEART_DOUBLEPACK then
+					if not player:CanPickRedHearts() then
+						print("Heart edgecase")
+						edgecase = true
+					end
+					
+				elseif pickup.SubType == HeartSubType.HEART_SOUL or pickup.SubType == HeartSubType.HEART_BLACK or pickup.SubType == HeartSubType.HEART_BLENDED or pickup.SubType == HeartSubType.HEART_BONE then
+					if not player:CanPickSoulHearts() then
+						print("Heart edgecase")
+						edgecase = true
+					end			
+				
+				end
+			--Battery Edgecase
+			elseif pickup.Variant == PickupVariant.PICKUP_LIL_BATTERY then
+				if not player:NeedsCharge(0) and not player:NeedsCharge(1) and not player:NeedsCharge(2) and not player:NeedsCharge(3) then
+					print("Battery edgecase")
+					edgecase = true
+				end
+			elseif pickup.Variant == PickupVariant.PICKUP_BOMB or pickup.Variant == PickupVariant.PICKUP_KEY  or pickup.Variant == PickupVariant.PICKUP_COLLECTIBLE or PickupVariant.PICKUP_PILL or PickupVariant.PICKUP_GRAB_BAG or PickupVariant.PICKUP_TAROTCARD or PickupVariant.PICKUP_TRINKET then
+
+			
+			--Everything else is an edgecase, just in case I mess up
+			else
+				edgecase = true
+			end			
+			
+			if not edgecase and player.ItemHoldCooldown == 0 and not player:IsHoldingItem() and pickup.Price == -1000 and player:GetTrinketMultiplier(TrinketType.TRINKET_STORE_CREDIT) > 1 then
+				
+				rng = player:GetTrinketRNG(TrinketType.TRINKET_STORE_CREDIT)
+				rngRoll = rng:RandomInt(100)
+				rngChance = math.min(100, 100 * (player:GetTrinketMultiplier(TrinketType.TRINKET_STORE_CREDIT) - 1))
+				print("Store Credit Roll: " .. rngRoll .. "|" .. rngChance)
+				if rngRoll <= rngChance then
+					loot = Isaac.Spawn(EntityType.ENTITY_PICKUP, PickupVariant.PICKUP_TRINKET, TrinketType.TRINKET_STORE_CREDIT, player.Position, Vector(-5 + rng:RandomInt(10),-5 + rng:RandomInt(10)), nil)
+				end	
+					
+				
+			end				
+			
+			
+		
+		end
+		
+
+	
+	
+	end
+end
+
 TrinketStacking:AddCallback(ModCallbacks.MC_POST_UPDATE, TrinketStacking.onUpdate)
 TrinketStacking:AddCallback(ModCallbacks.MC_POST_RENDER, TrinketStacking.onRender)
 TrinketStacking:AddCallback(ModCallbacks.MC_POST_NEW_ROOM, TrinketStacking.onNewRoom)
@@ -811,6 +950,30 @@ TrinketStacking:AddCallback(ModCallbacks.MC_PRE_GAME_EXIT, TrinketStacking.onGam
 --On NPC death
 TrinketStacking:AddCallback(ModCallbacks.MC_POST_NPC_DEATH, TrinketStacking.onNPCDeath)
 
+--On pickup collections
+TrinketStacking:AddCallback(ModCallbacks.MC_PRE_PICKUP_COLLISION, TrinketStacking.onCoinPickup, PickupVariant.PICKUP_COIN)
+TrinketStacking:AddCallback(ModCallbacks.MC_PRE_PICKUP_COLLISION, TrinketStacking.onHeartPickup, PickupVariant.PICKUP_HEART)
+
+--For equality only
+TrinketStacking:AddCallback(ModCallbacks.MC_PRE_PICKUP_COLLISION, TrinketStacking.onEqualityPickup, PickupVariant.PICKUP_COIN)
+TrinketStacking:AddCallback(ModCallbacks.MC_PRE_PICKUP_COLLISION, TrinketStacking.onEqualityPickup, PickupVariant.PICKUP_KEY)
+TrinketStacking:AddCallback(ModCallbacks.MC_PRE_PICKUP_COLLISION, TrinketStacking.onEqualityPickup, PickupVariant.PICKUP_BOMB)
+
+--For Store Credit Only
+TrinketStacking:AddCallback(ModCallbacks.MC_PRE_PICKUP_COLLISION, TrinketStacking.onShopPickup, PickupVariant.PICKUP_KEY)
+TrinketStacking:AddCallback(ModCallbacks.MC_PRE_PICKUP_COLLISION, TrinketStacking.onShopPickup, PickupVariant.PICKUP_BOMB)
+TrinketStacking:AddCallback(ModCallbacks.MC_PRE_PICKUP_COLLISION, TrinketStacking.onShopPickup, PickupVariant.PICKUP_GRAB_BAG)
+TrinketStacking:AddCallback(ModCallbacks.MC_PRE_PICKUP_COLLISION, TrinketStacking.onShopPickup, PickupVariant.PICKUP_PILL)
+TrinketStacking:AddCallback(ModCallbacks.MC_PRE_PICKUP_COLLISION, TrinketStacking.onShopPickup, PickupVariant.PICKUP_LIL_BATTERY)
+TrinketStacking:AddCallback(ModCallbacks.MC_PRE_PICKUP_COLLISION, TrinketStacking.onShopPickup, PickupVariant.PICKUP_HEART)
+TrinketStacking:AddCallback(ModCallbacks.MC_PRE_PICKUP_COLLISION, TrinketStacking.onShopPickup, PickupVariant.PICKUP_TAROTCARD)
+TrinketStacking:AddCallback(ModCallbacks.MC_PRE_PICKUP_COLLISION, TrinketStacking.onShopPickup, PickupVariant.PICKUP_COLLECTIBLE)
+TrinketStacking:AddCallback(ModCallbacks.MC_PRE_PICKUP_COLLISION, TrinketStacking.onShopPickup, PickupVariant.PICKUP_TRINKET)
+
+
+---
+--
+--EID Descriptions
 local changedEID = false
 if EID and not changedEID then
 	changedEID = true
@@ -928,6 +1091,11 @@ if EID and not changedEID then
 	--Hairpin
 	currID = 120
 	currStr = EID:getDescriptionObj(5, 350, currID).Description .. startStr .. "Killing the boss room boss drops a battery"
+	EID:addTrinket(currID, currStr)	
+
+	--Equality
+	currID = 103
+	currStr = EID:getDescriptionObj(5, 350, currID).Description .. startStr .. "Picking up a consumable gives a chance to spawn the consumable type that Isaac has the least of"
 	EID:addTrinket(currID, currStr)		
 end
 
