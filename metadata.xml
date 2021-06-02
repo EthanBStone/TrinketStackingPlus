@@ -42,7 +42,7 @@ All Current Trinket Effects
 Updates:
 -Content update 1: 4 new trinket effects: Pay To Win, Store Key, Hairpin, and Safety Scissors
 -Mini update: Now supports EID!</description>
-    <version>1.3</version>
+    <version>1.4</version>
     <visibility>Public</visibility>
     <tag id="Items"/>
     <tag id="Trinkets"/>

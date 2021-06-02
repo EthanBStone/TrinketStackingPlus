@@ -80,7 +80,7 @@ Extension cord laser: Subtype 2
 
 ]]--
 
-TrinketStacking.DEBUG = 1 --ENABLES DEBUG MODE! Make sure this is 0 unless you are testing the mod
+TrinketStacking.DEBUG = 0 --ENABLES DEBUG MODE! Make sure this is 0 unless you are testing the mod
 
 
 --Check for store key at the start of the game
@@ -700,7 +700,7 @@ function TrinketStacking:onSecretRoomEntered()
 	end
 end
 
---On player hurt, used for safety scissors
+--On player hurt, used for safety scissors and crow heart
 function TrinketStacking:onPlayerHurt(player, dmg, flags, dmgSource, cdFrames)
 	player = player:ToPlayer()
 	--Safety scissors code
@@ -716,7 +716,7 @@ function TrinketStacking:onPlayerHurt(player, dmg, flags, dmgSource, cdFrames)
 		end
 	end
 
-	--Crow's Heart code
+	--Crow Heart code
 	if (flags & DamageFlag.DAMAGE_FAKE) == 0 then
 		if player:GetTrinketMultiplier(TrinketType.TRINKET_CROW_HEART) > 1 then
 			rng = player:GetTrinketRNG(TrinketType.TRINKET_CROW_HEART)
@@ -745,7 +745,7 @@ function TrinketStacking:onShopEntered()
 	end
 end
 
-
+--On boss kill, for Hairpin
 function TrinketStacking:onNPCDeath(enemy)
 	--On boss killed
 	if enemy:IsBoss() and hairpinTriggered == 0 then
@@ -766,7 +766,6 @@ function TrinketStacking:onNPCDeath(enemy)
 		end
 	end
 end
-
 
 --On Coin pickup, for rotten penny
 function TrinketStacking:onCoinPickup(pickup, ent, bool)
@@ -818,8 +817,6 @@ function TrinketStacking:onHeartPickup(pickup, ent, bool)
 	end		
 end
 
-
-
 --Helper function for equality
 function TrinketStacking:getLowestConsumable()
 	player = game:GetPlayer(1)
@@ -859,8 +856,8 @@ function TrinketStacking:onEqualityPickup(pickup, ent, bool)
 				--Do extra drop
 				rng = player:GetTrinketRNG(TrinketType.TRINKET_EQUALITY)
 				rngRoll = rng:RandomInt(100)
-				--20% chance per extra multiplier of equality
-				rngChance = math.min(35, 15 * (player:GetTrinketMultiplier(TrinketType.TRINKET_EQUALITY) - 1))
+				--10% chance per extra multiplier of equality
+				rngChance = math.min(35, 5 + 10 * (player:GetTrinketMultiplier(TrinketType.TRINKET_EQUALITY) - 1))
 				--print("Equality Roll: " .. rngRoll .. "|" .. rngChance)
 				if rngRoll <= rngChance then
 					loot = Isaac.Spawn(EntityType.ENTITY_PICKUP, dropVariant, 0, player.Position, Vector(-5 + rng:RandomInt(10),-5 + rng:RandomInt(10)), nil)
@@ -1149,7 +1146,7 @@ if EID and not changedEID then
 
 	for key, item in pairs(trinketInfo) do
 		currID = item.Id
-		currStr = startStr .. item.Desc
+		currStr = EID:getDescriptionObj(5, 350, currID).Description .. startStr .. item.Desc
 		EID:addTrinket(currID, currStr)
 	end
 end
