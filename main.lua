@@ -56,22 +56,28 @@ Current Interactions:
 
 *Safety Scissors: Chance to resist explosive damage
 
+*Hairpin: Killing the boss room boss drops a battery
+
 ****BUGS
 *Continuing the run with fish tail will give you a chance to duplicate flies/spiders
 *Wooden Cross's shield will stay on isaac when you drop it after it replenishes via holy card trigger
 *Store key, vibrant/dim bulbs damage is not affected by dmg multipliers like soy milk or polyphemus
 ]]--
 
-TrinketStacking.DEBUG = 1 --ENABLES DEBUG MODE! Make sure this is 0 unless you are testing the mod
+TrinketStacking.DEBUG = 0 --ENABLES DEBUG MODE! Make sure this is 0 unless you are testing the mod
 
 
-
+--Check for store key at the start of the game
+local initialStoreKeyCheck = 0
 function TrinketStacking:onStart(continuedRun)
 	if continuedRun == true and TrinketStacking:HasData() then
 		GameState = json.decode(TrinketStacking:LoadData() )
+		--Evaluate cache for store key on run continue
+
 	end
 	if GameState.StoreKeyData == nil or continuedRun == false then GameState.StoreKeyData = {0,0,0,0,0,0,0,0} end
 	if GameState.StoreKeyFlag == nil or continuedRun == false then GameState.StoreKeyFlag = {0,0,0,0,0,0,0,0} end
+	initialStoreKeyCheck = 1
 end
 
 function TrinketStacking:onGameExit(bool)
@@ -82,6 +88,9 @@ end
 
 
 local myosotisFlag = 0
+--Makes sure hairpin only triggers once per boss room
+local hairpinTriggered = 0
+
 
 function TrinketStacking:onUpdate()
 	--DEBUG ONLY spawns items
@@ -196,8 +205,12 @@ function TrinketStacking:onUpdate()
 		player:AddCard(10)	--Hermit card	
 		]]--
 		--Safety Scissors
-		player:AddTrinket(63) --Safety Scissors
-		player:AddCollectible(190) --Pyro
+		--player:AddTrinket(63) --Safety Scissors
+		--player:AddCollectible(190) --Pyro
+		
+		--Hairpin
+		player:AddTrinket(120) --Hairpin
+		player:AddCard(5) -- Emp card
 					
 	end
 
@@ -228,7 +241,7 @@ function TrinketStacking:onUpdate()
 		if GameState.StoreKeyFlag ~= nil then
 			if GameState.StoreKeyFlag[i] == 0 then
 				if player:GetTrinketMultiplier(TrinketType.TRINKET_STORE_KEY) > 1 then
-					print("Player picked up store key")
+					--print("Player picked up store key")
 					GameState.StoreKeyFlag[i] = 1
 					player:AddCacheFlags(CacheFlag.CACHE_DAMAGE)
 					player:EvaluateItems()
@@ -237,7 +250,7 @@ function TrinketStacking:onUpdate()
 			--Unflag store key if the player doesn't have it anymore
 			elseif GameState.StoreKeyFlag[i] == 1 then
 				if player:GetTrinketMultiplier(TrinketType.TRINKET_STORE_KEY) <= 1 then
-						print("Player dropped store key")
+						--print("Player dropped store key")
 						GameState.StoreKeyFlag[i] = 0
 						player:AddCacheFlags(CacheFlag.CACHE_DAMAGE)
 						player:EvaluateItems()
@@ -245,6 +258,17 @@ function TrinketStacking:onUpdate()
 			
 			end
 		end
+	end
+
+	if GameState.StoreKeyFlag ~= nil and initialStoreKeyCheck == 1 then
+		initialStoreKeyCheck = 2
+		for i = 1, game:GetNumPlayers()do
+			if GameState.StoreKeyFlag[i] >= 1 and player:GetTrinketMultiplier(TrinketType.TRINKET_STORE_KEY) > 1 then
+					player = game:GetPlayer(i)
+					player:AddCacheFlags(CacheFlag.CACHE_DAMAGE)
+					player:EvaluateItems()			
+			end
+		end	
 	end
 end
 
@@ -259,7 +283,7 @@ end
 
 --On new room entered: Locusts, familiars
 function TrinketStacking:onNewRoom() 
-	devilDealsCount = game:GetDevilRoomDeals()
+	hairpinTriggered = 0
 	level = game:GetLevel()
 	room = level:GetCurrentRoom()
 	roomDesc = level:GetCurrentRoomDesc()
@@ -369,13 +393,13 @@ end
 
 --On start of new level, for Wicked Crown/Holy Crown, Stem Cells
 function TrinketStacking:onNewLevel() 
+	hairpinTriggered = 0
 	level = game:GetLevel()
 	stage = level:GetStage()
 	room = level:GetCurrentRoom()
 	roomDesc = level:GetCurrentRoomDesc()
 	roomConfigR = roomDesc.Data
 	stageID = roomConfigR.StageID
-	hurtCount = 0
 	
 	--Wicked/Holy Crown and Pay To Win Code
 	if stage == LevelStage.STAGE6 then --Dark room/Chest stage	
@@ -699,7 +723,7 @@ function TrinketStacking:onSecretRoomEntered()
 	end
 end
 
-
+--On player hurt, used for safety scissors
 function TrinketStacking:onPlayerHurt(player, dmg, flags, dmgSource, cdFrames)
 	player = player:ToPlayer()
 	--Safety scissors code
@@ -726,6 +750,28 @@ function TrinketStacking:onShopEntered()
 			player:AddCacheFlags(CacheFlag.CACHE_DAMAGE)
 			player:EvaluateItems()
 			--print("Store key data: " ..GameState.StoreKeyData[pNum])
+		end
+	end
+end
+
+
+function TrinketStacking:onNPCDeath(enemy)
+	--On boss killed
+	if enemy:IsBoss() and hairpinTriggered == 0 then
+		level = game:GetLevel()
+		room = level:GetCurrentRoom()
+		roomType = room:GetType()
+		if roomType == RoomType.ROOM_BOSS then
+			for i = 1, game:GetNumPlayers() do
+				player = game:GetPlayer(i)		
+				if player:GetTrinketMultiplier(TrinketType.TRINKET_HAIRPIN) > 1 then
+					rng = player:GetTrinketRNG(TrinketType.TRINKET_HAIRPIN)
+					hairpinTriggered = 1
+					for spawns = 1, (player:GetTrinketMultiplier(TrinketType.TRINKET_HAIRPIN) - 1) do
+						battery = Isaac.Spawn(EntityType.ENTITY_PICKUP, PickupVariant.PICKUP_LIL_BATTERY, BatterySubType.BATTERY_NORMAL, Vector(320,270), Vector(-10 + rng:RandomInt(10),rng:RandomInt(3) ), nil)
+					end
+				end
+			end
 		end
 	end
 end
@@ -761,6 +807,9 @@ TrinketStacking:AddCallback(ModCallbacks.MC_ENTITY_TAKE_DMG, TrinketStacking.onP
 --Game start/exit for any save data
 TrinketStacking:AddCallback(ModCallbacks.MC_POST_GAME_STARTED, TrinketStacking.onStart)
 TrinketStacking:AddCallback(ModCallbacks.MC_PRE_GAME_EXIT, TrinketStacking.onGameExit)
+
+--On NPC death
+TrinketStacking:AddCallback(ModCallbacks.MC_POST_NPC_DEATH, TrinketStacking.onNPCDeath)
 
 local changedEID = false
 if EID and not changedEID then
@@ -874,6 +923,11 @@ if EID and not changedEID then
 	--Safety Scissors
 	currID = 63
 	currStr = EID:getDescriptionObj(5, 350, currID).Description .. startStr .. "Chance to resist explosive damage"
+	EID:addTrinket(currID, currStr)	
+
+	--Hairpin
+	currID = 120
+	currStr = EID:getDescriptionObj(5, 350, currID).Description .. startStr .. "Killing the boss room boss drops a battery"
 	EID:addTrinket(currID, currStr)		
 end
 
