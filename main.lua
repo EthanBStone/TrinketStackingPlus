@@ -12,11 +12,9 @@ Notes:
 Locusts are familiars, variant 43 "Blue Fly"
 Center of a room: 320, 270
 Extension cord laser: Subtype 2
-Bugs:
-*Fish head might be spawning more flies than it should?
-*Apple of sodom might be a bit buggy
 
-Current Interactions:
+
+====Current Interactions====
 *All "Locust of" trinkets work properly. Each extra multiplier give a 75% chance to spawn an extra locust
 
 *Filigree Feather: Each additional multiplier gives you a spirit heart drop for every angel statue killed
@@ -49,6 +47,8 @@ Current Interactions:
 
 *Rotten Penny: Chance to spawn an extra fly on coin pickup. Higher multiplier = higher chance
 
+===Content Update 1===
+
 *Pay To Win: Restock boxes appear in Blue Womb treasure rooms, and Chest/Dark Room starting room
 
 *Store Key: Gives a damage up for each shop you enter while holding the store key
@@ -57,19 +57,30 @@ Current Interactions:
 
 *Hairpin: Killing the boss room boss drops a battery
 
+===Content Update 2===
+
 *Equality: Picking up a consumable gives a chance to spawn the consumable type that Isaac has the least of
 
 *Crow Heart: Change to convert incoming damage into "fake" damage like dull razor
-****BUGS
+
+*Store Credit: Small chance to not destroy the trinket when buying from the shop. If the chance fails, drops several coins
+
+*Your Soul: Small chance to not destroy the trinket when taking a devil deal. If the chance fails, drops a black sack
+
+*Judas' Tongue: Chance to spawn a black heart when taking a devil deal
+
+
+====BUGS====
 *Continuing the run with fish tail will give you a chance to duplicate flies/spiders
 *Wooden Cross's shield will stay on isaac when you drop it after it replenishes via holy card trigger
 *Store key, vibrant/dim bulbs damage is not affected by dmg multipliers like soy milk or polyphemus
+*Crow Heart doesnt give iframes
 
 *Do some more testing w rotten penny and apple of sodom to make sure they arent broken
 
 ]]--
 
-TrinketStacking.DEBUG = 0 --ENABLES DEBUG MODE! Make sure this is 0 unless you are testing the mod
+TrinketStacking.DEBUG = 1 --ENABLES DEBUG MODE! Make sure this is 0 unless you are testing the mod
 
 
 --Check for store key at the start of the game
@@ -214,9 +225,21 @@ function TrinketStacking:onUpdate()
 		--player:AddCollectible(190) --Pyro
 		
 		--Hairpin
+		--[[
 		player:AddTrinket(120) --Hairpin
 		player:AddCard(5) -- Emp card
-					
+		]]--
+		
+		--Your soul
+		--[[
+		player:AddTrinket(173) --Your soul
+		player:AddCard(31) -- Joker
+		]]--
+		
+		--Judas tongue
+		player:AddTrinket(56) --Your soul
+		player:AddCard(31) -- Joker
+						
 	end
 
 	--Myosotis code
@@ -361,10 +384,7 @@ function TrinketStacking:onHostileRoomStart()
 						Isaac.Spawn(EntityType.ENTITY_FAMILIAR, FamiliarVariant.BLUE_FLY, locustIndex, player.Position, Vector(0,0), player)
 						--print("Extra locust")
 					end				
-				end
-
-				
-				
+				end	
 			end
 		end
 	
@@ -840,8 +860,8 @@ function TrinketStacking:onEqualityPickup(pickup, ent, bool)
 				rng = player:GetTrinketRNG(TrinketType.TRINKET_EQUALITY)
 				rngRoll = rng:RandomInt(100)
 				--20% chance per extra multiplier of equality
-				rngChance = 20 * (player:GetTrinketMultiplier(TrinketType.TRINKET_EQUALITY) - 1)
-				print("Equality Roll: " .. rngRoll .. "|" .. rngChance)
+				rngChance = math.min(35, 15 * (player:GetTrinketMultiplier(TrinketType.TRINKET_EQUALITY) - 1))
+				--print("Equality Roll: " .. rngRoll .. "|" .. rngChance)
 				if rngRoll <= rngChance then
 					loot = Isaac.Spawn(EntityType.ENTITY_PICKUP, dropVariant, 0, player.Position, Vector(-5 + rng:RandomInt(10),-5 + rng:RandomInt(10)), nil)
 				end
@@ -853,67 +873,142 @@ function TrinketStacking:onEqualityPickup(pickup, ent, bool)
 	end
 end
 
---For Store credit
+--For buying shop/devil deals, Store Credit, Your Soul
 function TrinketStacking:onShopPickup(pickup, ent, bool)
 	if ent.Type == EntityType.ENTITY_PLAYER then
 		player = ent:ToPlayer()
 		--Store Credit code
 		--print("is shop item")
-		if pickup:IsShopItem() then
-			print("IsShop True")
-			print("Price: " .. pickup.Price)
-			edgecase = false
-			--Hearts Edgecase
-			if pickup.Variant == PickupVariant.PICKUP_HEART then
-				if pickup.SubType == HeartSubType.HEART_FULL or pickup.SubType == HeartSubType.HEART_HALF or pickup.SubType == HeartSubType.HEART_ROTTEN or pickup.SubType == HeartSubType.HEART_DOUBLEPACK then
-					if not player:CanPickRedHearts() then
-						print("Heart edgecase")
+		if pickup:IsShopItem() and player.ItemHoldCooldown == 0 and not player:IsHoldingItem() then
+			--print("IsShop True")
+			--print("Price: " .. pickup.Price)
+			local edgecase = false
+			local buyType = shop
+			--Devil Deal detected
+			if pickup.Price < 0 and pickup.Price > -7 then
+				buyType = "devil"
+				--print("Devil deal!")
+				if player:HasTrinket(TrinketType.TRINKET_YOUR_SOUL) then
+					edgecase = false
+				elseif pickup.Price == PickupPrice.PRICE_THREE_SOULHEARTS then 
+					if player:GetSoulHearts() <= 0 then
 						edgecase = true
 					end
-					
-				elseif pickup.SubType == HeartSubType.HEART_SOUL or pickup.SubType == HeartSubType.HEART_BLACK or pickup.SubType == HeartSubType.HEART_BLENDED or pickup.SubType == HeartSubType.HEART_BONE then
-					if not player:CanPickSoulHearts() then
-						print("Heart edgecase")
+				elseif pickup.Price == PickupPrice.PRICE_ONE_HEART or pickup.Price == PickupPrice.PRICE_TWO_HEARTS then
+					if player:GetMaxHearts() <= 0 then
 						edgecase = true
-					end			
-				
-				end
-			--Battery Edgecase
-			elseif pickup.Variant == PickupVariant.PICKUP_LIL_BATTERY then
-				if not player:NeedsCharge(0) and not player:NeedsCharge(1) and not player:NeedsCharge(2) and not player:NeedsCharge(3) then
-					print("Battery edgecase")
+					end				
+				elseif pickup.Price == PickupPrice.PRICE_ONE_HEART_AND_TWO_SOULHEARTS then
+					if player:GetMaxHearts() <= 0 or player:GetSoulHearts() <= 0 then
+						edgecase = true
+					end							
+				else	
 					edgecase = true
 				end
-			elseif pickup.Variant == PickupVariant.PICKUP_BOMB or pickup.Variant == PickupVariant.PICKUP_KEY  or pickup.Variant == PickupVariant.PICKUP_COLLECTIBLE or PickupVariant.PICKUP_PILL or PickupVariant.PICKUP_GRAB_BAG or PickupVariant.PICKUP_TAROTCARD or PickupVariant.PICKUP_TRINKET then
-
-			
-			--Everything else is an edgecase, just in case I mess up
-			else
-				edgecase = true
-			end			
-			
-			if not edgecase and player.ItemHoldCooldown == 0 and not player:IsHoldingItem() and pickup.Price == -1000 and player:GetTrinketMultiplier(TrinketType.TRINKET_STORE_CREDIT) > 1 then
-				
-				rng = player:GetTrinketRNG(TrinketType.TRINKET_STORE_CREDIT)
-				rngRoll = rng:RandomInt(100)
-				rngChance = math.min(100, 100 * (player:GetTrinketMultiplier(TrinketType.TRINKET_STORE_CREDIT) - 1))
-				print("Store Credit Roll: " .. rngRoll .. "|" .. rngChance)
-				if rngRoll <= rngChance then
-					loot = Isaac.Spawn(EntityType.ENTITY_PICKUP, PickupVariant.PICKUP_TRINKET, TrinketType.TRINKET_STORE_CREDIT, player.Position, Vector(-5 + rng:RandomInt(10),-5 + rng:RandomInt(10)), nil)
-				end	
+			--Shop item detected
+			elseif pickup.Price == PickupPrice.PRICE_FREE or pickup.Price > 0 then
+				buyType = "shop"
+				--Hearts Edgecase
+				if pickup.Variant == PickupVariant.PICKUP_HEART then
+					if pickup.SubType == HeartSubType.HEART_FULL or pickup.SubType == HeartSubType.HEART_HALF or pickup.SubType == HeartSubType.HEART_ROTTEN or pickup.SubType == HeartSubType.HEART_DOUBLEPACK then
+						if not player:CanPickRedHearts() then
+							--print("Heart edgecase")
+							edgecase = true
+						end
+						
+					elseif pickup.SubType == HeartSubType.HEART_SOUL or pickup.SubType == HeartSubType.HEART_BLACK or pickup.SubType == HeartSubType.HEART_BLENDED or pickup.SubType == HeartSubType.HEART_BONE then
+						if not player:CanPickSoulHearts() then
+							--print("Heart edgecase")
+							edgecase = true
+						end			
 					
+					end
+				--Battery Edgecase
+				elseif pickup.Variant == PickupVariant.PICKUP_LIL_BATTERY then
+					if not player:NeedsCharge(0) and not player:NeedsCharge(1) and not player:NeedsCharge(2) and not player:NeedsCharge(3) then
+						--print("Battery edgecase")
+						edgecase = true
+					end
+				elseif pickup.Variant == PickupVariant.PICKUP_BOMB or pickup.Variant == PickupVariant.PICKUP_KEY  or pickup.Variant == PickupVariant.PICKUP_COLLECTIBLE or PickupVariant.PICKUP_PILL or PickupVariant.PICKUP_GRAB_BAG or PickupVariant.PICKUP_TAROTCARD or PickupVariant.PICKUP_TRINKET then
+					edgecase = false
 				
-			end				
-			
-			
-		
-		end
-		
+				--Everything else is an edgecase, just in case I mess up
+				else
+					edgecase = true
+				end	
+			end
+			--Player has purchased an item
+			if not edgecase then
+				--Purchased free item with store credit
+				if buyType == "shop" and pickup.Price == -1000 and player:GetTrinketMultiplier(TrinketType.TRINKET_STORE_CREDIT) > 1 then
+					TrinketStacking:onStoreCreditPurchase(player, pickup)
+				end
+				--Purchased Devil deal
+				if buyType == "devil"  then
+					if pickup.Price == -6 and player:GetTrinketMultiplier(TrinketType.TRINKET_YOUR_SOUL) > 1 then
+						TrinketStacking:onYourSoulPurchase(player, pickup)
+					elseif player:GetTrinketMultiplier(TrinketType.TRINKET_JUDAS_TONGUE) > 1 then
+						TrinketStacking:onJudasTonguePurchase(player, pickup)
+					end				
 
-	
-	
+				end
+			end				
+		end
 	end
 end
+
+--For Store credit
+function TrinketStacking:onStoreCreditPurchase(player, pickup)
+	rng = player:GetTrinketRNG(TrinketType.TRINKET_STORE_CREDIT)
+	rngRoll = rng:RandomInt(100)
+	rngChance = math.min(35, 5 + 10 * (player:GetTrinketMultiplier(TrinketType.TRINKET_STORE_CREDIT) - 1))
+	--print("Store Credit Roll: " .. rngRoll .. "|" .. rngChance)
+	if rngRoll <= rngChance then
+		loot = Isaac.Spawn(EntityType.ENTITY_PICKUP, PickupVariant.PICKUP_TRINKET, TrinketType.TRINKET_STORE_CREDIT, player.Position, Vector(-5 + rng:RandomInt(10),-5 + rng:RandomInt(10)), nil)
+	--RNG Failed
+	else
+		--print("Rng failed, spawning coins")
+		minCoins = (player:GetTrinketMultiplier(TrinketType.TRINKET_STORE_CREDIT) - 1) * 2 + 2
+		rngRoll = minCoins + rng:RandomInt(5)	
+		--print("Min coins: " .. minCoins .. " Roll: " .. rngRoll)
+		for i = 1, rngRoll do
+			loot = Isaac.Spawn(EntityType.ENTITY_PICKUP, PickupVariant.PICKUP_COIN, 0, player.Position, Vector(-5 + rng:RandomInt(10),-5 + rng:RandomInt(10)), nil)
+		end
+	end	
+
+end
+--For Your Soul
+function TrinketStacking:onYourSoulPurchase(player, pickup)
+	--print("Your soul used!")
+	rng = player:GetTrinketRNG(TrinketType.TRINKET_YOUR_SOUL)
+	rngRoll = rng:RandomInt(100)
+	rngChance = math.min(25, 10 * (player:GetTrinketMultiplier(TrinketType.TRINKET_YOUR_SOUL) - 1))
+	--print("Your soul Roll: " .. rngRoll .. "|" .. rngChance)
+	if rngRoll <= rngChance then
+		loot = Isaac.Spawn(EntityType.ENTITY_PICKUP, PickupVariant.PICKUP_TRINKET, TrinketType.TRINKET_YOUR_SOUL, player.Position, Vector(-2 + rng:RandomInt(4),-2 + rng:RandomInt(4)), nil)
+	--RNG Failed
+	else
+		--print("Rng failed, spawning sacks")
+		for i = 1, (player:GetTrinketMultiplier(TrinketType.TRINKET_YOUR_SOUL) - 1) do
+			loot = Isaac.Spawn(EntityType.ENTITY_PICKUP, PickupVariant.PICKUP_GRAB_BAG, SackSubType.SACK_BLACK, player.Position, Vector(-2 + rng:RandomInt(4),-2 + rng:RandomInt(4)), nil)
+		end
+	end	
+
+end
+
+--For Judas' Tongue
+function TrinketStacking:onJudasTonguePurchase(player, pickup)
+	--print("Judas tongue used!")
+	rng = player:GetTrinketRNG(TrinketType.TRINKET_JUDAS_TONGUE)
+	rngRoll = rng:RandomInt(100)
+	rngChance = math.min(75, 30 * (player:GetTrinketMultiplier(TrinketType.TRINKET_JUDAS_TONGUE) - 1))
+	--print("Judas tongue Roll: " .. rngRoll .. "|" .. rngChance)
+	if rngRoll <= rngChance then
+		loot = Isaac.Spawn(EntityType.ENTITY_PICKUP, PickupVariant.PICKUP_HEART, HeartSubType.HEART_BLACK, player.Position, Vector(-2 + rng:RandomInt(4),-2 + rng:RandomInt(4)), nil)
+	end	
+
+end
+
 
 TrinketStacking:AddCallback(ModCallbacks.MC_POST_UPDATE, TrinketStacking.onUpdate)
 TrinketStacking:AddCallback(ModCallbacks.MC_POST_RENDER, TrinketStacking.onRender)
@@ -973,6 +1068,94 @@ TrinketStacking:AddCallback(ModCallbacks.MC_PRE_PICKUP_COLLISION, TrinketStackin
 
 ---
 --
+--EID Descriptions
+local changedEID = false
+if EID and not changedEID then
+	changedEID = true
+	local currStr = ""
+	local currID = 0
+	local startStr = "#{{Collectible439}} Stacking+: "
+	
+	local trinketInfo = {
+		--Locust of War
+		{Id = 113, Desc = "Adds a chance to spawn extra locusts"},
+		--Locust of Pestilence
+		{Id = 114, Desc = "Adds a chance to spawn extra locusts"},
+		--Locust of Famine
+		{Id = 115, Desc = "Adds a chance to spawn extra locusts"},
+		--Locust of Death
+		{Id = 116, Desc = "Adds a chance to spawn extra locusts"},
+		--Locust of Conquest
+		{Id = 117, Desc = "Adds a chance to spawn extra locusts"},
+		--Filigree Feather
+		{Id = 123, Desc = "Angel statue bosses also drop soul hearts"},
+		--Wicked Crown
+		{Id = 161, Desc = "Extra chests spawn at the start of the Dark Room floor"},
+		--Holy Crown
+		{Id = 155, Desc = "Extra chests spawn at the start of The Chest floor"},
+		--Bloody Crown
+		{Id = 111, Desc = "Mom's Heart drops a boss item when killed"},
+		--Silver Dollar
+		{Id = 110, Desc = "Mom's Heart drops a buyable shop item when killed"},		
+		--Wooden Cross
+		{Id = 121, Desc = "Chance to replenish shield on room clear"},	
+		--???'s Soul
+		{Id = 57, Desc = "Extra copy of the familiar"},	
+		--Isaac's Head
+		{Id = 54, Desc = "Extra copy of the familiar"},	
+		--Vibrant Bulb
+		{Id = 100, Desc = "Extra stat boosts when fully charged"},			
+		--Dim Bulb
+		{Id = 101, Desc = "Extra stat boosts when partially charged and NOT fully charged"},
+		--Apple of Sodom
+		{Id = 140, Desc = "Chance to spawn extra spiders on heart pickup"},	
+		--Fish Tail
+		{Id = 94, Desc = "Chance to generate extra flies/spiders"},	
+		--AAA Battery
+		{Id = 3, Desc = "Chance to spawn a micro battery on room clear"},			
+		--Fragmented Card
+		{Id = 102, Desc = "Chance to spawn extra sacks when entering a secret room"},
+		--Stem Cell
+		{Id = 119, Desc = "Spawn red hearts in the starting room of each floor"},	
+		--Myosotis
+		{Id = 137, Desc = "Chance to duplicate the carried over pickups"},	
+		--Rotten Penny
+		{Id = 126, Desc = "Chance to spawn extra flies on coin pickup"},	
+		
+		--Content Update 1
+		
+		--Pay To Win
+		{Id = 112, Desc = "Restock boxes appear in Blue Womb treasure rooms, and Chest/Dark Room starting room"},			
+		--Store Key
+		{Id = 83, Desc = "Gives a damage up for each shop you enter while holding the store key"},
+		--Safety Scissors
+		{Id = 63, Desc = "Chance to resist explosive damage"},	
+		--Hairpin
+		{Id = 120, Desc = "Killing the boss room boss drops a battery"},	
+		
+		--Content Update 2
+		
+		--Equality
+		{Id = 103, Desc = "Picking up a consumable gives a chance to spawn the consumable type that Isaac has the least of"},	
+		--Crow Heart
+		{Id = 107, Desc = "Change to convert incoming damage into \"fake\" damage like dull razor"},	
+		--Store Credit
+		{Id = 13, Desc = "Small chance to not destroy the trinket when buying from the shop. If the chance fails, drops several coins"},	
+		--Your Soul
+		{Id = 173, Desc = "Small chance to not destroy the trinket when taking a devil deal. If the chance fails, drops a black sack"},	
+		--Judas' Tongue
+		{Id = 56, Desc = "Chance to spawn a black heart when taking a devil deal"},			
+	}
+
+	for key, item in pairs(trinketInfo) do
+		currID = item.Id
+		currStr = startStr .. item.Desc
+		EID:addTrinket(currID, currStr)
+	end
+end
+
+--EID descriptions that worked but not optimal
+--[[
 --EID Descriptions
 local changedEID = false
 if EID and not changedEID then
@@ -1098,5 +1281,5 @@ if EID and not changedEID then
 	currStr = EID:getDescriptionObj(5, 350, currID).Description .. startStr .. "Picking up a consumable gives a chance to spawn the consumable type that Isaac has the least of"
 	EID:addTrinket(currID, currStr)		
 end
-
+]]--
 
