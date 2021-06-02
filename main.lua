@@ -5,6 +5,8 @@ local sound = SFXManager()
 
 local GameState = {}
 
+TrinketStacking.EIDSUPPORT = true --Set this to false if you don't want the stacking effect listed with Extended Item Descriptions
+
 --[[
 Notes: 
 Locusts are familiars, variant 43 "Blue Fly"
@@ -47,41 +49,60 @@ Current Interactions:
 *Myosotis: Chance to duplicate some of the carried over pickups
 
 *Rotten Penny: Chance to spawn an extra fly on coin pickup. Higher multiplier = higher chance
+
+*Pay To Win: Restock boxes appear in Blue Womb treasure rooms, and Chest/Dark Room starting room
+
+*Store Key: Gives a damage up for each shop you enter while holding the store key
+
+*Safety Scissors: Chance to resist explosive damage
+
+****BUGS
+*Continuing the run with fish tail will give you a chance to duplicate flies/spiders
+*Wooden Cross's shield will stay on isaac when you drop it after it replenishes via holy card trigger
+*Store key, vibrant/dim bulbs damage is not affected by dmg multipliers like soy milk or polyphemus
 ]]--
+
+TrinketStacking.DEBUG = 1 --ENABLES DEBUG MODE! Make sure this is 0 unless you are testing the mod
+
+
+
+function TrinketStacking:onStart(continuedRun)
+	if continuedRun == true and TrinketStacking:HasData() then
+		GameState = json.decode(TrinketStacking:LoadData() )
+	end
+	if GameState.StoreKeyData == nil or continuedRun == false then GameState.StoreKeyData = {0,0,0,0,0,0,0,0} end
+	if GameState.StoreKeyFlag == nil or continuedRun == false then GameState.StoreKeyFlag = {0,0,0,0,0,0,0,0} end
+end
+
+function TrinketStacking:onGameExit(bool)
+	if bool then
+		TrinketStacking:SaveData(json.encode(GameState))
+	end
+end
 
 
 local myosotisFlag = 0
-local devilDealsCount = 0
-
-
-
-function TrinketStacking.onGameExit() 
-	TrinketStacking:SaveData(json.encode(GameState))
-end
-
-function TrinketStacking:onStart(continuedRun)
-	devilDealsCount = game:GetDevilRoomDeals()
-	
-end
 
 function TrinketStacking:onUpdate()
 	--DEBUG ONLY spawns items
-	if game:GetFrameCount() == 1 then
+	if TrinketStacking.DEBUG == 1 and game:GetFrameCount() == 1 then
+		print("DEBUG MODE ENABLED FOR TRINKET STACKING PLUS")
 		player = Isaac.GetPlayer(1)
 		
-		Isaac.ExecuteCommand("debug 4") --Big dmg
-		--Isaac.ExecuteCommand("debug 3") --Infinite hp
+		--Isaac.ExecuteCommand("debug 4") --Big dmg
+		Isaac.ExecuteCommand("debug 3") --Infinite hp
 		Isaac.ExecuteCommand("debug 7")	--Show dmg nums
 		Isaac.ExecuteCommand("debug 8")	--Infinite charge
-		--Isaac.ExecuteCommand("debug 10") --Insta kills
+		Isaac.ExecuteCommand("debug 10") --Insta kills
 		
 		Isaac.Spawn(EntityType.ENTITY_DUMMY,0, 0, Vector(320, 270), Vector(0,0), player) --Dummy
 		
 		
 		player:AddCollectible(534) --School Bag
-		player:AddCollectible(479,12) --Smelter
+		--player:AddCollectible(479,12) --Smelter
+		player:AddCollectible(439,12) --Mom's box
 		Isaac.Spawn(5,100, 439, player.Position + Vector(0,-60), Vector(0,0), player) --Mom's Box
-		player:AddCollectible(139) --Moms purse
+		--player:AddCollectible(139) --Moms purse
 		
 		--Locust testing
 		--[[
@@ -158,18 +179,26 @@ function TrinketStacking:onUpdate()
 		player:AddCollectible(84) --We need to go deeper
 		player:AddTrinket(137) --myosotis
 		]]--
-		
-		--Judas Tongue
-		--[[
-		player:AddTrinket(56) --judas tongue
-		player:AddCard(31)
-		]]--
+
 		
 		--Rotten penny
-
-		player:AddTrinket(126) --Rotten penny
+		--player:AddTrinket(126) --Rotten penny
 		
+		--Wish bone
 		
+		--player:AddTrinket(104) --Wish bone
+		--player:AddCollectible(486)
+		--player:AddCard(31)
+		
+		--Store key
+		--[[
+		player:AddTrinket(83) --Wish bone
+		player:AddCard(10)	--Hermit card	
+		]]--
+		--Safety Scissors
+		player:AddTrinket(63) --Safety Scissors
+		player:AddCollectible(190) --Pyro
+					
 	end
 
 	--Myosotis code
@@ -194,46 +223,38 @@ function TrinketStacking:onUpdate()
 
 	end
 
-	--Devil Deal code for judas tongue, WIP
-	--[[
-	if devilDealsCount < game:GetDevilRoomDeals() then
-		print("Devil deal taken!: ")
-		devilDealsCount = game:GetDevilRoomDeals()
-		for i = 1, game:GetNumPlayers() do
-			player = game:GetPlayer(i)
+	--Store key flagging
+	for i = 1, game:GetNumPlayers() do
+		if GameState.StoreKeyFlag ~= nil then
+			if GameState.StoreKeyFlag[i] == 0 then
+				if player:GetTrinketMultiplier(TrinketType.TRINKET_STORE_KEY) > 1 then
+					print("Player picked up store key")
+					GameState.StoreKeyFlag[i] = 1
+					player:AddCacheFlags(CacheFlag.CACHE_DAMAGE)
+					player:EvaluateItems()
+									
+				end
+			--Unflag store key if the player doesn't have it anymore
+			elseif GameState.StoreKeyFlag[i] == 1 then
+				if player:GetTrinketMultiplier(TrinketType.TRINKET_STORE_KEY) <= 1 then
+						print("Player dropped store key")
+						GameState.StoreKeyFlag[i] = 0
+						player:AddCacheFlags(CacheFlag.CACHE_DAMAGE)
+						player:EvaluateItems()
+				end		
 			
-			print("Cooldown: " .. player.ItemHoldCooldown) 
-				--print(player.QueuedItem.Touched)
-				--print(player:IsHoldingItem())
-			--else
-				--print(false)
-			
-			--end
-			
-			
-			
-		
+			end
 		end
 	end
-	]]--
 end
 
 
-
---local debugSpawned = false
 function TrinketStacking:onRender() 
-
 	for i = 1, game:GetNumPlayers() do
 		player = game:GetPlayer(i)
 		player:GetData().pNum = i			
 	end
-	--[[
-	if game:GetFrameCount () % 60 == 1  then
-		for i, ent in pairs(Isaac.GetRoomEntities()) do
-			print("Type: " .. ent.Type .. " Variant:" .. ent.Variant .. " Subtype: " .. ent.SubType)
-		end
-	end
-	]]--
+
 end
 
 --On new room entered: Locusts, familiars
@@ -242,6 +263,8 @@ function TrinketStacking:onNewRoom()
 	level = game:GetLevel()
 	room = level:GetCurrentRoom()
 	roomDesc = level:GetCurrentRoomDesc()
+	roomConfigR = roomDesc.Data
+	stageID = roomConfigR.StageID
 	--Check to see if the room has been seen before
 	if(roomDesc.VisitedCount <= 1) then
 		if not roomDesc.Clear  then
@@ -251,9 +274,21 @@ function TrinketStacking:onNewRoom()
 		if room:GetType() == RoomType.ROOM_SECRET then
 			TrinketStacking.onSecretRoomEntered()
 		end
+		--Store Key increment
+		if room:GetType() == RoomType.ROOM_SHOP then
+			TrinketStacking.onShopEntered()
+		end		
+		
+		--Pay to Win code for Blue Womb/Hush 
+		if stageID == 13 and roomConfigR.Type == RoomType.ROOM_TREASURE then --Blue Womb/Hush floor
+			if player:GetTrinketMultiplier(TrinketType.TRINKET_PAY_TO_WIN) > 1 then
+				Isaac.Spawn(EntityType.ENTITY_SLOT, 10, 0, Vector(150,300) + Vector(0, -50 + rng:RandomInt(100)), Vector(0,0), player)
+			end
+			
+		end
 	end
 	--Code for ???'s Soul and Isaac's Head
-	famCount = 2
+	famCount = 2 --Amount of familiars in the following tables. ???'s soul + isaac's head = 2
 	familiarTrinket = {TrinketType.TRINKET_SOUL, TrinketType.TRINKET_ISAACS_HEAD}
 	familiarVariants = {FamiliarVariant.BLUE_BABY_SOUL, FamiliarVariant.ISAACS_HEAD}
 	for pNum = 1, game:GetNumPlayers() do
@@ -278,11 +313,11 @@ function TrinketStacking:onNewRoom()
 		end
 	end	
 
-
+	
 	
 end
 
---On hostile room start, for things like locusts and Wooden Cross
+--On hostile room start, for locusts
 function TrinketStacking:onHostileRoomStart()
 	for pNum = 1, game:GetNumPlayers() do
 		player = game:GetPlayer(pNum)
@@ -304,22 +339,13 @@ function TrinketStacking:onHostileRoomStart()
 			end
 		end
 	
-		--Code for Wooden Cross
-		if player:GetTrinketMultiplier(TrinketType.TRINKET_WOODEN_CROSS) > 1 then
-			local rng = player:GetTrinketRNG(TrinketType.TRINKET_WOODEN_CROSS)
-			local rngRoll = rng:RandomInt(100)
-			local crossChance = 5 + (player:GetTrinketMultiplier(TrinketType.TRINKET_WOODEN_CROSS) - 1) * 10
-			--print("WoodenCross Roll: " .. rngRoll .. "|" .. crossChance )
-			if rngRoll < crossChance then
-				print("WoodenCross Triggered!")
-				player:UseCard(Card.CARD_HOLY)
-			end
-		end
+
 		
 
 
 	end	
 end
+
 --Filigree Feather code
 function TrinketStacking:onAngelKill(ent)
 	--Make sure the room is either angel or sac room so it doesnt trigger for the mega satan fight
@@ -349,10 +375,26 @@ function TrinketStacking:onNewLevel()
 	roomDesc = level:GetCurrentRoomDesc()
 	roomConfigR = roomDesc.Data
 	stageID = roomConfigR.StageID
+	hurtCount = 0
 	
-	
-	--Wicked/Holy Crown Code
+	--Wicked/Holy Crown and Pay To Win Code
 	if stage == LevelStage.STAGE6 then --Dark room/Chest stage	
+		--Pay To Win
+		if stageID == 16 or stageID == 17 then --Dark Room or Chest
+			for i = 1, game:GetNumPlayers() do
+				player = game:GetPlayer(i)
+				if player:GetTrinketMultiplier(TrinketType.TRINKET_PAY_TO_WIN) > 1 then
+					
+					rng = player:GetTrinketRNG(TrinketType.TRINKET_PAY_TO_WIN)
+					--for i = 1, (player:GetTrinketMultiplier(TrinketType.TRINKET_PAY_TO_WIN) - 1) do
+					for i = 1, (player:GetTrinketMultiplier(TrinketType.TRINKET_PAY_TO_WIN) - 1) do	
+						--print("Spawning")
+						Isaac.Spawn(EntityType.ENTITY_SLOT, 10, 0, Vector(320,270) + Vector(-100 + rng:RandomInt(200),-100 + rng:RandomInt(200)), Vector(0,0), player)
+					end
+				end			
+			end		
+		end
+		--Wicked/Holy Crown
 		crownTrinketID = nil
 		crownChestType = nil
 		if stageID == 16 then --Dark room only
@@ -389,21 +431,13 @@ function TrinketStacking:onNewLevel()
 		
 		--Myosotis flag
 		if player:GetTrinketMultiplier(TrinketType.TRINKET_MYOSOTIS) > 1 then
-			print("Flagging myosotis")
+			--print("Flagging myosotis")
 			myosotisFlag = 1
 		end
 	end
 
 	
 	
-
-end
-
---On player hurt: 
-function TrinketStacking:onPlayerHurt(player, dmg, dmgFlags, dmgSource, cdFrames)
-	player = player:ToPlayer()
-	--print("Player hurt")
-
 
 end
 
@@ -436,9 +470,10 @@ function TrinketStacking:onMomsHeartKill(ent)
 					if player:GetTrinketMultiplier(crownTrinketID) > 1 then
 						local rng = player:GetTrinketRNG(crownTrinketID)
 						for i = 1, (player:GetTrinketMultiplier(crownTrinketID) - 1) do
-							--print("Triggered Mom's Heart Crown/Silver Dollar!")
+							--Spawn item
 							if i == 1 then
-								local spawnItem = TrinketStacking:spawnItemFromPool(ItemPoolType.POOL_BOSS, Vector(10 + rng:RandomInt(190), 10 + rng:RandomInt(370)), price, seed)
+								local spawnItem = TrinketStacking:spawnItemFromPool(pool, Vector(10 + rng:RandomInt(190), 10 + rng:RandomInt(370)), price, seed)
+							--Spawn sacks
 							else
 								local spawnItem = Isaac.Spawn(EntityType.ENTITY_PICKUP, PickupVariant.PICKUP_GRAB_BAG, 0, player.Position, Vector(-5 + rng:RandomInt(10),-5 + rng:RandomInt(10) ), player)
 							end
@@ -453,6 +488,7 @@ function TrinketStacking:onMomsHeartKill(ent)
 
 	end	
 end
+
 --Function to spawn item from a certain pool w/ a certain price
 function TrinketStacking:spawnItemFromPool(pool, pos, price, seed)
 	local spawnItem = Isaac.Spawn(
@@ -509,6 +545,7 @@ function TrinketStacking:onCacheEval(player, cacheFlag)
 		end
 		
 		if hasUnChargedActive > 0 and player:GetTrinketMultiplier(TrinketType.TRINKET_DIM_BULB) > 1 then
+			
 			bulbBoosts.SPEED = bulbBoosts.SPEED + DimBulbBoosts.SPEED * (player:GetTrinketMultiplier(TrinketType.TRINKET_DIM_BULB) - 1)
 			bulbBoosts.DMG = bulbBoosts.DMG + DimBulbBoosts.DMG * (player:GetTrinketMultiplier(TrinketType.TRINKET_DIM_BULB) - 1)
 			bulbBoosts.LUCK = bulbBoosts.DMG + DimBulbBoosts.LUCK * (player:GetTrinketMultiplier(TrinketType.TRINKET_DIM_BULB) - 1)
@@ -523,9 +560,16 @@ function TrinketStacking:onCacheEval(player, cacheFlag)
 		end
 	end	
 	
-
+	pNum = player:GetData().pNum
+	--Store key code
+	local storeKeyDmg = 0
+	if pNum ~= nil and player:GetTrinketMultiplier(TrinketType.TRINKET_STORE_KEY) > 1 and GameState.StoreKeyData[pNum] >= 1 then
+		
+		storeKeyDmg = 0.15 + GameState.StoreKeyData[pNum] * 0.1
+	
+	end
 	if cacheFlag == CacheFlag.CACHE_DAMAGE then
-		player.Damage = player.Damage + bulbBoosts.DMG
+		player.Damage = player.Damage + bulbBoosts.DMG + storeKeyDmg
 	end
 	if cacheFlag == CacheFlag.CACHE_SPEED then
 		player.MoveSpeed = player.MoveSpeed + bulbBoosts.SPEED
@@ -541,7 +585,6 @@ function TrinketStacking:onPlayerUpdate(player)
 		for pIndex, pickup in pairs(Isaac.FindInRadius(player.Position, 10, EntityPartition.PICKUP)) do
 			if pickup.Variant == PickupVariant.PICKUP_HEART and pickup:GetData().Stack_Sodom ~= 1 and pickup:GetSprite():GetAnimation() == "Idle" then		
 				pickup:GetSprite():Play("Collect", true)
-				print("Apple heart detected")
 				pickup:GetData().Stack_Sodom = 1
 				local appleSpiderRolls = 0
 				--Half heart
@@ -549,19 +592,17 @@ function TrinketStacking:onPlayerUpdate(player)
 					appleSpiderRolls = 1 * (player:GetTrinketMultiplier(TrinketType.TRINKET_APPLE_OF_SODOM) - 1)
 				--Full heart
 				elseif pickup.SubType == HeartSubType.HEART_FULL then
-					appleSpiderRolls = 2 *(player:GetTrinketMultiplier(TrinketType.TRINKET_APPLE_OF_SODOM) - 1)
+					appleSpiderRolls = 1 *(player:GetTrinketMultiplier(TrinketType.TRINKET_APPLE_OF_SODOM) - 1)
 				--Double heart
 				elseif pickup.SubType == HeartSubType.HEART_DOUBLEPACK then
-					appleSpiderRolls = 3 *(player:GetTrinketMultiplier(TrinketType.TRINKET_APPLE_OF_SODOM) - 1)
+					appleSpiderRolls = 2 *(player:GetTrinketMultiplier(TrinketType.TRINKET_APPLE_OF_SODOM) - 1)
 				end
 
-				print("Spider Rolls: " .. appleSpiderRolls)
+				--print("Spider Rolls: " .. appleSpiderRolls)
 				rng = player:GetTrinketRNG(TrinketType.TRINKET_APPLE_OF_SODOM)
 				for spiderNum = 1, appleSpiderRolls do
 					rngRoll = rng:RandomInt(100)
 					if rngRoll < 50 then 
-						print("Spawned apple spider")
-						--Isaac.Spawn(EntityType.ENTITY_FAMILIAR, FamiliarVariant.BLUE_SPIDER, 0, player.Position, Vector(0,0), player)
 						player:AddBlueSpider(player.Position)
 					end
 					
@@ -582,9 +623,8 @@ function TrinketStacking:onPlayerUpdate(player)
 				rng = player:GetTrinketRNG(TrinketType.TRINKET_ROTTEN_PENNY)
 				rngRoll = rng:RandomInt(100)
 				rngChance = (30 + 20 * (player:GetTrinketMultiplier(TrinketType.TRINKET_ROTTEN_PENNY) - 1) )
-				print("Roll: " .. rngRoll .. "|" .. rngChance)	
+				--print("Roll: " .. rngRoll .. "|" .. rngChance)	
 				if rngRoll <= rngChance then 
-					--print("Spawned rotten penny fly")
 					player:AddBlueFlies(1, player.Position, player )
 				end				
 			end
@@ -601,7 +641,8 @@ function TrinketStacking:onBlueFlySpider(fly)
 		
 		for rolls = 1, (player:GetTrinketMultiplier(TrinketType.TRINKET_FISH_TAIL) - 1) do
 			rngRoll = rng:RandomInt(100)
-			if rngRoll <= 5 then
+			--print("FishTail: " .. rngRoll .. "|3")
+			if rngRoll <= 3 then
 				--print("Extra fly spawn")
 				spawned = Isaac.Spawn(EntityType.ENTITY_FAMILIAR, fly.Variant, 0, player.Position, Vector(0,0), player)
 				spawned:GetData().Stacked_Check = true
@@ -612,16 +653,28 @@ function TrinketStacking:onBlueFlySpider(fly)
 end
 
 function TrinketStacking:onRoomClear(rng, pos)
-
 	for i = 1, game:GetNumPlayers() do
 		player = game:GetPlayer(i)
+		--AAA Battery code
 		if player:GetTrinketMultiplier(TrinketType.TRINKET_AAA_BATTERY) > 1 then
 			rngRoll = rng:RandomInt(100)
 			rngChance = 5 * player:GetTrinketMultiplier(TrinketType.TRINKET_AAA_BATTERY) --10% chance to get micro battery on room clear, extra 5% per multiplier
-			print("Battery roll: " .. rngRoll .. "|" .. rngChance)
+			--print("Battery roll: " .. rngRoll .. "|" .. rngChance)
 			
 			if rngRoll <= rngChance then
 				battery = Isaac.Spawn(EntityType.ENTITY_PICKUP, PickupVariant.PICKUP_LIL_BATTERY, BatterySubType.BATTERY_MICRO, pos, Vector(0.25,-0.25), nil)
+			end
+		end
+	
+		--Code for Wooden Cross
+		if player:GetTrinketMultiplier(TrinketType.TRINKET_WOODEN_CROSS) > 1 then
+			local rng = player:GetTrinketRNG(TrinketType.TRINKET_WOODEN_CROSS)
+			local rngRoll = rng:RandomInt(100)
+			local crossChance = 5 + (player:GetTrinketMultiplier(TrinketType.TRINKET_WOODEN_CROSS) - 1) * 10
+			--print("WoodenCross Roll: " .. rngRoll .. "|" .. crossChance )
+			if rngRoll < crossChance then
+				--print("WoodenCross Triggered!")
+				player:UseCard(Card.CARD_HOLY)
 			end
 		end
 	end
@@ -647,6 +700,35 @@ function TrinketStacking:onSecretRoomEntered()
 end
 
 
+function TrinketStacking:onPlayerHurt(player, dmg, flags, dmgSource, cdFrames)
+	player = player:ToPlayer()
+	--Safety scissors code
+	if (flags & DamageFlag.DAMAGE_EXPLOSION) > 0 then
+		if player:GetTrinketMultiplier(TrinketType.TRINKET_SAFETY_SCISSORS) > 1 then
+			rng = player:GetTrinketRNG(TrinketType.TRINKET_SAFETY_SCISSORS)
+			rngRoll = rng:RandomInt(100)
+			rngChance = 40 + (20 * (player:GetTrinketMultiplier(TrinketType.TRINKET_SAFETY_SCISSORS) - 1))
+			--print("Resist expl: " .. rngRoll .. "|" .. rngChance)
+			if rngRoll <= rngChance then
+				return false
+			end
+		end
+	end
+end
+
+--Store key code
+function TrinketStacking:onShopEntered()
+	for i = 1, game:GetNumPlayers() do
+		player = game:GetPlayer(i)
+		pNum = player:GetData().pNum
+		if pNum ~= nil and player:GetTrinketMultiplier(TrinketType.TRINKET_STORE_KEY) > 1 then
+			GameState.StoreKeyData[pNum] = GameState.StoreKeyData[pNum] + (player:GetTrinketMultiplier(TrinketType.TRINKET_STORE_KEY) - 1)
+			player:AddCacheFlags(CacheFlag.CACHE_DAMAGE)
+			player:EvaluateItems()
+			--print("Store key data: " ..GameState.StoreKeyData[pNum])
+		end
+	end
+end
 
 TrinketStacking:AddCallback(ModCallbacks.MC_POST_UPDATE, TrinketStacking.onUpdate)
 TrinketStacking:AddCallback(ModCallbacks.MC_POST_RENDER, TrinketStacking.onRender)
@@ -657,9 +739,6 @@ TrinketStacking:AddCallback(ModCallbacks.MC_POST_NPC_DEATH, TrinketStacking.onAn
 
 --For Bloody Crown
 TrinketStacking:AddCallback(ModCallbacks.MC_POST_NEW_LEVEL, TrinketStacking.onNewLevel)
-
---On player harmed
-TrinketStacking:AddCallback(ModCallbacks.MC_ENTITY_TAKE_DMG, TrinketStacking.onPlayerHurt, EntityType.ENTITY_PLAYER)
 
 --On Mom's Heart kill, for Bloody Crown
 TrinketStacking:AddCallback(ModCallbacks.MC_POST_NPC_DEATH, TrinketStacking.onMomsHeartKill, EntityType.ENTITY_MOMS_HEART)
@@ -675,12 +754,127 @@ TrinketStacking:AddCallback(ModCallbacks.MC_FAMILIAR_INIT, TrinketStacking.onBlu
 TrinketStacking:AddCallback(ModCallbacks.MC_PRE_SPAWN_CLEAN_AWARD, TrinketStacking.onRoomClear)
 --Player update
 TrinketStacking:AddCallback(ModCallbacks.MC_POST_PLAYER_UPDATE, TrinketStacking.onPlayerUpdate)
---Game start
+
+--Player Hurt
+TrinketStacking:AddCallback(ModCallbacks.MC_ENTITY_TAKE_DMG, TrinketStacking.onPlayerHurt, EntityType.ENTITY_PLAYER)
+
+--Game start/exit for any save data
 TrinketStacking:AddCallback(ModCallbacks.MC_POST_GAME_STARTED, TrinketStacking.onStart)
+TrinketStacking:AddCallback(ModCallbacks.MC_PRE_GAME_EXIT, TrinketStacking.onGameExit)
 
+local changedEID = false
+if EID and not changedEID then
+	changedEID = true
+	local currStr = ""
+	local currID = 0
+	local startStr = "#{{Collectible439}} Stacking+: "
+	
+	--Locusts
+	for l = 1, 5 do
+		local currID = 112 + l
+		local currStr = EID:getDescriptionObj(5, 350, currID).Description .. startStr .. "Adds a chance to spawn extra locusts"
+		EID:addTrinket(currID, currStr)
+	end
+	
+	--Filigree Feather
+	currID = 123
+	currStr = EID:getDescriptionObj(5, 350, currID).Description .. startStr .. "Angel statue bosses also drop soul hearts"
+	EID:addTrinket(currID, currStr)	
+	
+	--Wicked Crown
+	currID = 161
+	currStr = EID:getDescriptionObj(5, 350, currID).Description .. startStr .. "Extra chests spawn at the start of the Dark Room floor"
+	EID:addTrinket(currID, currStr)	
 
---TrinketStacking:AddCallback(ModCallbacks.MC_POST_GAME_STARTED, TrinketStacking.onStart)
---TrinketStacking:AddCallback(ModCallbacks.MC_PRE_GAME_EXIT, TrinketStacking.onGameExit)
+	--Holy Crown
+	currID = 155
+	currStr = EID:getDescriptionObj(5, 350, currID).Description .. startStr .. "Extra chests spawn at the start of The Chest floor"
+	EID:addTrinket(currID, currStr)	
 
+	--Bloody Crown
+	currID = 111
+	currStr = EID:getDescriptionObj(5, 350, currID).Description .. startStr .. "Mom's Heart drops a boss item when killed"
+	EID:addTrinket(currID, currStr)	
+	
+	--Silver Dollar
+	currID = 110
+	currStr = EID:getDescriptionObj(5, 350, currID).Description .. startStr .. "Mom's Heart drops a buyable shop item when killed"
+	EID:addTrinket(currID, currStr)	
+	
+	--Wooden Cross
+	currID = 121
+	currStr = EID:getDescriptionObj(5, 350, currID).Description .. startStr .. "Chance to replenish shield on room clear"
+	EID:addTrinket(currID, currStr)	
+
+	--???'s Soul
+	currID = 57
+	currStr = EID:getDescriptionObj(5, 350, currID).Description .. startStr .. "Extra copy of the familiar"
+	EID:addTrinket(currID, currStr)	
+
+	--Isaac's Head
+	currID = 54
+	currStr = EID:getDescriptionObj(5, 350, currID).Description .. startStr .. "Extra copy of the familiar"
+	EID:addTrinket(currID, currStr)	
+	
+	--Vibrant Bulb
+	currID = 100
+	currStr = EID:getDescriptionObj(5, 350, currID).Description .. startStr .. "Extra stat boosts when fully charged"
+	EID:addTrinket(currID, currStr)	
+		
+	--Dim Bulb
+	currID = 101
+	currStr = EID:getDescriptionObj(5, 350, currID).Description .. startStr .. "Extra stat boosts when partially charged and NOT fully charged"
+	EID:addTrinket(currID, currStr)	
+	
+	--Apple of Sodom
+	currID = 140
+	currStr = EID:getDescriptionObj(5, 350, currID).Description .. startStr .. "Chance to spawn extra spiders on heart pickup"
+	EID:addTrinket(currID, currStr)	
+			
+	--Fish Tail
+	currID = 94
+	currStr = EID:getDescriptionObj(5, 350, currID).Description .. startStr .. "Chance to generate extra flies/spiders"
+	EID:addTrinket(currID, currStr)	
+
+	--AAA Battery
+	currID = 3
+	currStr = EID:getDescriptionObj(5, 350, currID).Description .. startStr .. "Chance to spawn a micro battery on room clear"
+	EID:addTrinket(currID, currStr)	
+
+	--Fragmented Card
+	currID = 102
+	currStr = EID:getDescriptionObj(5, 350, currID).Description .. startStr .. "Chance to spawn extra sacks when entering a secret room"
+	EID:addTrinket(currID, currStr)	
+
+	--Stem Cell
+	currID = 119
+	currStr = EID:getDescriptionObj(5, 350, currID).Description .. startStr .. "Spawn red hearts in the starting room of each floor"
+	EID:addTrinket(currID, currStr)	
+	
+	--Myosotis
+	currID = 137
+	currStr = EID:getDescriptionObj(5, 350, currID).Description .. startStr .. "Chance to duplicate the carried over pickups"
+	EID:addTrinket(currID, currStr)	
+	
+	--Rotten Penny
+	currID = 126
+	currStr = EID:getDescriptionObj(5, 350, currID).Description .. startStr .. "Chance to spawn extra flies on coin pickup"
+	EID:addTrinket(currID, currStr)	
+	
+	--Pay To Win
+	currID = 112
+	currStr = EID:getDescriptionObj(5, 350, currID).Description .. startStr .. "Restock boxes appear in Blue Womb treasure rooms, and Chest/Dark Room starting room"
+	EID:addTrinket(currID, currStr)	
+
+	--Store Key
+	currID = 83
+	currStr = EID:getDescriptionObj(5, 350, currID).Description .. startStr .. "Gives a damage up for each shop you enter while holding the store key"
+	EID:addTrinket(currID, currStr)		
+	
+	--Safety Scissors
+	currID = 63
+	currStr = EID:getDescriptionObj(5, 350, currID).Description .. startStr .. "Chance to resist explosive damage"
+	EID:addTrinket(currID, currStr)		
+end
 
 
