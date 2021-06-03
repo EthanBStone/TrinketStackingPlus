@@ -2,7 +2,6 @@ local TrinketStacking = RegisterMod("TrinketStackingMod", 1)
 local game = Game()
 local json = require("json")
 local sound = SFXManager()
-
 local GameState = {}
 
 TrinketStacking.EIDSUPPORT = true --Set this to false if you don't want the stacking effect listed with Extended Item Descriptions
@@ -69,6 +68,9 @@ Extension cord laser: Subtype 2
 
 *Judas' Tongue: Chance to spawn a black heart when taking a devil deal
 
+*Extension Cord: Most of your familiars' tears will be Tech Zero electrical tears, with a small chance to gain a Jacob's Ladder effect
+
+*Baby-Bender: Familiars have more range and better homing
 
 ====BUGS====
 *Continuing the run with fish tail will give you a chance to duplicate flies/spiders
@@ -80,7 +82,7 @@ Extension cord laser: Subtype 2
 
 ]]--
 
-TrinketStacking.DEBUG = 0 --ENABLES DEBUG MODE! Make sure this is 0 unless you are testing the mod
+TrinketStacking.DEBUG = 1 --ENABLES DEBUG MODE! Make sure this is 0 unless you are testing the mod
 
 
 --Check for store key at the start of the game
@@ -118,7 +120,7 @@ function TrinketStacking:onUpdate()
 		Isaac.ExecuteCommand("debug 3") --Infinite hp
 		Isaac.ExecuteCommand("debug 7")	--Show dmg nums
 		Isaac.ExecuteCommand("debug 8")	--Infinite charge
-		Isaac.ExecuteCommand("debug 10") --Insta kills
+		--Isaac.ExecuteCommand("debug 10") --Insta kills
 		
 		Isaac.Spawn(EntityType.ENTITY_DUMMY,0, 0, Vector(320, 270), Vector(0,0), player) --Dummy
 		
@@ -838,14 +840,8 @@ function TrinketStacking:getLowestConsumable()
 		end	
 		--print("Lowest consumable: " .. minConsumable.variant)
 		return minConsumable.variant
-	end
-
-	
-
-	
-	
+	end	
 end
-
 --Only for equality
 function TrinketStacking:onEqualityPickup(pickup, ent, bool)
 	if ent.Type == EntityType.ENTITY_PLAYER then
@@ -1006,6 +1002,41 @@ function TrinketStacking:onJudasTonguePurchase(player, pickup)
 
 end
 
+local function TEARFLAG(x)
+    return x >= 64 and BitSet128(0,1<<x) or BitSet128(1<<x,0)
+end
+
+--Familiar tear effects, baby-bender and extension cord
+function TrinketStacking:onTearUpdate(tear)	
+	if tear:GetData().FAM_TRINKET_CHECK == nil and tear.SpawnerType == EntityType.ENTITY_FAMILIAR then
+		tear:GetData().FAM_TRINKET_CHECK = 1
+		local familiar = tear.SpawnerEntity:ToFamiliar()
+		player = familiar.SpawnerEntity
+		player = player:ToPlayer()
+		--Extension Cord code
+		if player ~= nil and player:GetTrinketMultiplier(TrinketType.TRINKET_EXTENSION_CORD) > 1 then
+			rng = player:GetTrinketRNG(TrinketType.TRINKET_EXTENSION_CORD)
+			rngRoll = rng:RandomInt(100)
+			if rngRoll <= 95 then
+				tear:AddTearFlags(TearFlags.TEAR_LASER)	
+			end
+			if player:GetTrinketMultiplier(TrinketType.TRINKET_EXTENSION_CORD) > 2 then
+				rngRoll = rng:RandomInt(100)
+				if rngRoll <= 25 * (player:GetTrinketMultiplier(TrinketType.TRINKET_EXTENSION_CORD) - 2) then
+					tear:AddTearFlags(TearFlags.TEAR_JACOBS)	
+				end				
+			end
+
+		end
+		--Baby Bender
+		if player ~= nil and player:GetTrinketMultiplier(TrinketType.TRINKET_BABY_BENDER) > 1 then
+			tear:AddTearFlags(TEARFLAG(71))
+			tear.Height = tear.Height * (1 + (player:GetTrinketMultiplier(TrinketType.TRINKET_BABY_BENDER) - 1) * 0.5)
+		
+		end
+	end
+end
+
 
 TrinketStacking:AddCallback(ModCallbacks.MC_POST_UPDATE, TrinketStacking.onUpdate)
 TrinketStacking:AddCallback(ModCallbacks.MC_POST_RENDER, TrinketStacking.onRender)
@@ -1062,7 +1093,8 @@ TrinketStacking:AddCallback(ModCallbacks.MC_PRE_PICKUP_COLLISION, TrinketStackin
 TrinketStacking:AddCallback(ModCallbacks.MC_PRE_PICKUP_COLLISION, TrinketStacking.onShopPickup, PickupVariant.PICKUP_COLLECTIBLE)
 TrinketStacking:AddCallback(ModCallbacks.MC_PRE_PICKUP_COLLISION, TrinketStacking.onShopPickup, PickupVariant.PICKUP_TRINKET)
 
-
+--For extenstion cord
+TrinketStacking:AddCallback(ModCallbacks.MC_POST_TEAR_UPDATE, TrinketStacking.onTearUpdate)
 ---
 --
 --EID Descriptions
@@ -1142,6 +1174,11 @@ if EID and not changedEID then
 		{Id = 173, Desc = "Small chance to not destroy the trinket when taking a devil deal. If the chance fails, drops a black sack"},	
 		--Judas' Tongue
 		{Id = 56, Desc = "Chance to spawn a black heart when taking a devil deal"},			
+	
+		--Extension Cord
+		{Id = 125, Desc = "Most of your familiars' tears will be Tech Zero electrical tears, with a small chance to gain a Jacob's Ladder effect"},		
+		--Baby-Bender
+		{Id = 127, Desc = "Familiars have more range and better homing"},	
 	}
 
 	for key, item in pairs(trinketInfo) do
@@ -1151,132 +1188,4 @@ if EID and not changedEID then
 	end
 end
 
---EID descriptions that worked but not optimal
---[[
---EID Descriptions
-local changedEID = false
-if EID and not changedEID then
-	changedEID = true
-	local currStr = ""
-	local currID = 0
-	local startStr = "#{{Collectible439}} Stacking+: "
-	
-	--Locusts
-	for l = 1, 5 do
-		local currID = 112 + l
-		local currStr = EID:getDescriptionObj(5, 350, currID).Description .. startStr .. "Adds a chance to spawn extra locusts"
-		EID:addTrinket(currID, currStr)
-	end
-	
-	--Filigree Feather
-	currID = 123
-	currStr = EID:getDescriptionObj(5, 350, currID).Description .. startStr .. "Angel statue bosses also drop soul hearts"
-	EID:addTrinket(currID, currStr)	
-	
-	--Wicked Crown
-	currID = 161
-	currStr = EID:getDescriptionObj(5, 350, currID).Description .. startStr .. "Extra chests spawn at the start of the Dark Room floor"
-	EID:addTrinket(currID, currStr)	
-
-	--Holy Crown
-	currID = 155
-	currStr = EID:getDescriptionObj(5, 350, currID).Description .. startStr .. "Extra chests spawn at the start of The Chest floor"
-	EID:addTrinket(currID, currStr)	
-
-	--Bloody Crown
-	currID = 111
-	currStr = EID:getDescriptionObj(5, 350, currID).Description .. startStr .. "Mom's Heart drops a boss item when killed"
-	EID:addTrinket(currID, currStr)	
-	
-	--Silver Dollar
-	currID = 110
-	currStr = EID:getDescriptionObj(5, 350, currID).Description .. startStr .. "Mom's Heart drops a buyable shop item when killed"
-	EID:addTrinket(currID, currStr)	
-	
-	--Wooden Cross
-	currID = 121
-	currStr = EID:getDescriptionObj(5, 350, currID).Description .. startStr .. "Chance to replenish shield on room clear"
-	EID:addTrinket(currID, currStr)	
-
-	--???'s Soul
-	currID = 57
-	currStr = EID:getDescriptionObj(5, 350, currID).Description .. startStr .. "Extra copy of the familiar"
-	EID:addTrinket(currID, currStr)	
-
-	--Isaac's Head
-	currID = 54
-	currStr = EID:getDescriptionObj(5, 350, currID).Description .. startStr .. "Extra copy of the familiar"
-	EID:addTrinket(currID, currStr)	
-	
-	--Vibrant Bulb
-	currID = 100
-	currStr = EID:getDescriptionObj(5, 350, currID).Description .. startStr .. "Extra stat boosts when fully charged"
-	EID:addTrinket(currID, currStr)	
-		
-	--Dim Bulb
-	currID = 101
-	currStr = EID:getDescriptionObj(5, 350, currID).Description .. startStr .. "Extra stat boosts when partially charged and NOT fully charged"
-	EID:addTrinket(currID, currStr)	
-	
-	--Apple of Sodom
-	currID = 140
-	currStr = EID:getDescriptionObj(5, 350, currID).Description .. startStr .. "Chance to spawn extra spiders on heart pickup"
-	EID:addTrinket(currID, currStr)	
-			
-	--Fish Tail
-	currID = 94
-	currStr = EID:getDescriptionObj(5, 350, currID).Description .. startStr .. "Chance to generate extra flies/spiders"
-	EID:addTrinket(currID, currStr)	
-
-	--AAA Battery
-	currID = 3
-	currStr = EID:getDescriptionObj(5, 350, currID).Description .. startStr .. "Chance to spawn a micro battery on room clear"
-	EID:addTrinket(currID, currStr)	
-
-	--Fragmented Card
-	currID = 102
-	currStr = EID:getDescriptionObj(5, 350, currID).Description .. startStr .. "Chance to spawn extra sacks when entering a secret room"
-	EID:addTrinket(currID, currStr)	
-
-	--Stem Cell
-	currID = 119
-	currStr = EID:getDescriptionObj(5, 350, currID).Description .. startStr .. "Spawn red hearts in the starting room of each floor"
-	EID:addTrinket(currID, currStr)	
-	
-	--Myosotis
-	currID = 137
-	currStr = EID:getDescriptionObj(5, 350, currID).Description .. startStr .. "Chance to duplicate the carried over pickups"
-	EID:addTrinket(currID, currStr)	
-	
-	--Rotten Penny
-	currID = 126
-	currStr = EID:getDescriptionObj(5, 350, currID).Description .. startStr .. "Chance to spawn extra flies on coin pickup"
-	EID:addTrinket(currID, currStr)	
-	
-	--Pay To Win
-	currID = 112
-	currStr = EID:getDescriptionObj(5, 350, currID).Description .. startStr .. "Restock boxes appear in Blue Womb treasure rooms, and Chest/Dark Room starting room"
-	EID:addTrinket(currID, currStr)	
-
-	--Store Key
-	currID = 83
-	currStr = EID:getDescriptionObj(5, 350, currID).Description .. startStr .. "Gives a damage up for each shop you enter while holding the store key"
-	EID:addTrinket(currID, currStr)		
-	
-	--Safety Scissors
-	currID = 63
-	currStr = EID:getDescriptionObj(5, 350, currID).Description .. startStr .. "Chance to resist explosive damage"
-	EID:addTrinket(currID, currStr)	
-
-	--Hairpin
-	currID = 120
-	currStr = EID:getDescriptionObj(5, 350, currID).Description .. startStr .. "Killing the boss room boss drops a battery"
-	EID:addTrinket(currID, currStr)	
-
-	--Equality
-	currID = 103
-	currStr = EID:getDescriptionObj(5, 350, currID).Description .. startStr .. "Picking up a consumable gives a chance to spawn the consumable type that Isaac has the least of"
-	EID:addTrinket(currID, currStr)		
-end
-]]--
 
