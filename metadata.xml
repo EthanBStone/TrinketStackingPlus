@@ -7,42 +7,56 @@
 
 Mom's Box and Golden Trinket's trinket modifying abilities are a really cool mechanic in the game, however they don't work with almost HALF of the trinkets in the game. There are over 80 trinkets that have no effect at all with Mom's Box, and having the Golden version does nothing either. That's where my mod comes in
 
-Trinket Stacking + adds new trinket stacking effects to 22 trinkets that previously lacked them. I designed these effects to be more powerful with the more trinket multiplier you have, so having Mom's Box + the Gold version of a trinket will be even more powerful!
+Trinket Stacking + adds new trinket stacking effects to 33 trinkets that previously lacked them. I designed these effects to be more powerful with the more trinket multiplier you have, so having Mom's Box + the Gold version of a trinket will be even more powerful!
 
-Update! 4 new effects: Pay To Win, Store Key, Hairpin, and Safety Scissors
+[h1]Latest Updates[/h1]
+Mini Update! 2 new effects: Baby-Bender + Extension Cord
+Content update 2 released! Includes 5 new effects: 
+Equality!, Crow Heart, Store Credit , Your Soul , Judas' Tongue
 
-All Current Trinket Effects
--Locust of Conquest - spawn extra locusts
--Locust of Death-spawn extra locusts
--Locust of Famine-spawn extra locusts
--Locust of Pestilence-spawn extra locusts
--Locust of War-spawn extra locusts
--Filigree Feather -angel statues drop soul hearts
--Wicked Crown-extra chests in the dark room
--Holy Crown-spawn extra chests in the chest
--Bloody Crown-moms heart drops boss items
--Silver Dollar-moms heart drops a buyable shop item
--Wooden Cross - chance regain shield on room clear
--???'s Soul- extra copy 
--Isaac's Head - extra copy 
--Vibrant Bulb - extra boosts 
--Dim Bulb - Boosts apply as long as the item isnt FULLY charged
--Apple of Sodom - More spiders spawned
--Fish Tail- chance for extra flies/spiders spawned
--AAA Battery-chance to drop micro batteries on room clear
--Fragmented Card - Normal Secret rooms have a chance to spawn a sack when entering 
--Stem Cell-drop full red heart on ground at start of floor for every multiplier
--Myosotis - chance to duplicate the carried over pickups
--Rotten Penny - chance for more flies on coin pickup
--Pay to Win - Restock boxes appear in blue womb treasure rooms, and chest/dark room
--Store Key - Gives a damage up for each shop you enter while holding the key
--Hairpin - Killing the boss room boss will drop a battery
--Safety Scissors - chance to resist explosive damage
-
-Updates:
+[h1] All Current Trinket Effects [/h1][list]
+[*]Locust of Conquest - spawn extra locusts
+[*]Locust of Death-spawn extra locusts
+[*]Locust of Famine-spawn extra locusts
+[*]Locust of Pestilence-spawn extra locusts
+[*]Locust of War-spawn extra locusts
+[*]Filigree Feather -angel statues drop soul hearts
+[*]Wicked Crown-extra chests in the dark room
+[*]Holy Crown-spawn extra chests in the chest
+[*]Bloody Crown-moms heart drops boss items
+[*]Silver Dollar-moms heart drops a buyable shop item
+[*]Wooden Cross - chance regain shield on room clear
+[*]???'s Soul- extra copy 
+[*]Isaac's Head - extra copy 
+[*]Vibrant Bulb - extra boosts 
+[*]Dim Bulb - Boosts apply as long as the item isnt FULLY charged
+[*]Apple of Sodom - More spiders spawned
+[*]Fish Tail- chance for extra flies/spiders spawned
+[*]AAA Battery-chance to drop micro batteries on room clear
+[*]Fragmented Card - Normal Secret rooms have a chance to spawn a sack when entering 
+[*]Stem Cell-drop full red heart on ground at start of floor for every multiplier
+[*]Myosotis - chance to duplicate the carried over pickups
+[*]Rotten Penny - chance for more flies on coin pickup
+[*]Pay to Win - Restock boxes appear in blue womb treasure rooms, and chest/dark room
+[*]Store Key - Gives a damage up for each shop you enter while holding the key
+[*]Hairpin - Killing the boss room boss will drop a battery
+[*]Safety Scissors - chance to resist explosive damage
+[*]Equality!- Picking up a consumable gives a chance to spawn the consumable type that Isaac has the least of
+[*]Crow Heart- Chance to convert damage to “fake damage” like dull razor
+[*]Store Credit - chance to not be used/chance to spawn another copy of the trinket, otherwise spawns coins
+[*]Your Soul -chance to not be used or spawn an extra copy, otherwise spawns a black sack
+[*]Judas' Tongue- taking a devil deal has a chance to drop a black heart
+[*]Extension Cord - Familiars gain Tech Zero tears
+[*]Baby-Bender- Familiars have more range and better homing
+[/list]
+[h1]Updates:[/h1]
+-Mini update: Baby-bender + extension cord added
+-Content update 2: 5 new effects: 
+Equality!, Crow Heart, Store Credit , Your Soul , Judas' Tongue
 -Content update 1: 4 new trinket effects: Pay To Win, Store Key, Hairpin, and Safety Scissors
--Mini update: Now supports EID!</description>
-    <version>1.4</version>
+-Mini update: Now supports EID!
+</description>
+    <version>1.5</version>
     <visibility>Public</visibility>
     <tag id="Items"/>
     <tag id="Trinkets"/>

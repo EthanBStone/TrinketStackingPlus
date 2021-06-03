@@ -1,8 +1,12 @@
 local TrinketStacking = RegisterMod("TrinketStackingMod", 1)
+
 local game = Game()
 local json = require("json")
 local sound = SFXManager()
 local GameState = {}
+
+local Helpers = require("helpers.lua")
+
 
 TrinketStacking.EIDSUPPORT = true --Set this to false if you don't want the stacking effect listed with Extended Item Descriptions
 
@@ -68,6 +72,7 @@ Extension cord laser: Subtype 2
 
 *Judas' Tongue: Chance to spawn a black heart when taking a devil deal
 
+===Mini Update===
 *Extension Cord: Most of your familiars' tears will be Tech Zero electrical tears, with a small chance to gain a Jacob's Ladder effect
 
 *Baby-Bender: Familiars have more range and better homing
@@ -82,7 +87,7 @@ Extension cord laser: Subtype 2
 
 ]]--
 
-TrinketStacking.DEBUG = 1 --ENABLES DEBUG MODE! Make sure this is 0 unless you are testing the mod
+TrinketStacking.DEBUG = 0 --ENABLES DEBUG MODE! Make sure this is 0 unless you are testing the mod
 
 
 --Check for store key at the start of the game
@@ -96,6 +101,7 @@ function TrinketStacking:onStart(continuedRun)
 	if GameState.StoreKeyData == nil or continuedRun == false then GameState.StoreKeyData = {0,0,0,0,0,0,0,0} end
 	if GameState.StoreKeyFlag == nil or continuedRun == false then GameState.StoreKeyFlag = {0,0,0,0,0,0,0,0} end
 	initialStoreKeyCheck = 1
+
 end
 
 function TrinketStacking:onGameExit(bool)
@@ -523,7 +529,7 @@ function TrinketStacking:onMomsHeartKill(ent)
 						for i = 1, (player:GetTrinketMultiplier(crownTrinketID) - 1) do
 							--Spawn item
 							if i == 1 then
-								local spawnItem = TrinketStacking:spawnItemFromPool(pool, Vector(10 + rng:RandomInt(190), 10 + rng:RandomInt(370)), price, seed)
+								local spawnItem = Helpers:spawnItemFromPool(pool, Vector(10 + rng:RandomInt(190), 10 + rng:RandomInt(370)), price, seed)
 							--Spawn sacks
 							else
 								local spawnItem = Isaac.Spawn(EntityType.ENTITY_PICKUP, PickupVariant.PICKUP_GRAB_BAG, 0, player.Position, Vector(-5 + rng:RandomInt(10),-5 + rng:RandomInt(10) ), player)
@@ -539,7 +545,7 @@ function TrinketStacking:onMomsHeartKill(ent)
 
 	end	
 end
-
+--[[
 --Function to spawn item from a certain pool w/ a certain price
 function TrinketStacking:spawnItemFromPool(pool, pos, price, seed)
 	local spawnItem = Isaac.Spawn(
@@ -558,6 +564,7 @@ function TrinketStacking:spawnItemFromPool(pool, pos, price, seed)
 	return spawnItem
 	--spawnItem = i
 end
+]]--
 
 --Additional multipliers for the bulb trinkets will grant you an addition of these stats
 local VibrantBulbBoosts =  {
@@ -820,6 +827,7 @@ function TrinketStacking:onHeartPickup(pickup, ent, bool)
 end
 
 --Helper function for equality
+--[[
 function TrinketStacking:getLowestConsumable()
 	player = game:GetPlayer(1)
 	local consumables = {
@@ -842,12 +850,13 @@ function TrinketStacking:getLowestConsumable()
 		return minConsumable.variant
 	end	
 end
+]]--
 --Only for equality
 function TrinketStacking:onEqualityPickup(pickup, ent, bool)
 	if ent.Type == EntityType.ENTITY_PLAYER then
 		player = ent:ToPlayer()
 		if player:GetTrinketMultiplier(TrinketType.TRINKET_EQUALITY) > 1 then
-			dropVariant = TrinketStacking.getLowestConsumable()
+			dropVariant = Helpers:getLowestConsumable()
 			if dropVariant ~= nil then
 				--Do extra drop
 				rng = player:GetTrinketRNG(TrinketType.TRINKET_EQUALITY)
@@ -1175,6 +1184,7 @@ if EID and not changedEID then
 		--Judas' Tongue
 		{Id = 56, Desc = "Chance to spawn a black heart when taking a devil deal"},			
 	
+		--Mini Update
 		--Extension Cord
 		{Id = 125, Desc = "Most of your familiars' tears will be Tech Zero electrical tears, with a small chance to gain a Jacob's Ladder effect"},		
 		--Baby-Bender
@@ -1187,5 +1197,7 @@ if EID and not changedEID then
 		EID:addTrinket(currID, currStr)
 	end
 end
+
+
 
 
