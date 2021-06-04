@@ -7,12 +7,10 @@
 
 Mom's Box and Golden Trinket's trinket modifying abilities are a really cool mechanic in the game, however they don't work with almost HALF of the trinkets in the game. There are over 80 trinkets that have no effect at all with Mom's Box, and having the Golden version does nothing either. That's where my mod comes in
 
-Trinket Stacking + adds new trinket stacking effects to 33 trinkets that previously lacked them. I designed these effects to be more powerful with the more trinket multiplier you have, so having Mom's Box + the Gold version of a trinket will be even more powerful!
+Trinket Stacking + adds new trinket stacking effects to 41 trinkets that previously lacked them. I designed these effects to be more powerful with the more trinket multiplier you have, so having Mom's Box + the Gold version of a trinket will be even more powerful!
 
 [h1]Latest Updates[/h1]
-Mini Update! 2 new effects: Baby-Bender + Extension Cord
-Content update 2 released! Includes 5 new effects: 
-Equality!, Crow Heart, Store Credit , Your Soul , Judas' Tongue
+Worms Update! 8 new effects: Pulse Worm, Ouroboros Worm, Rainbow Worm, Ring Worm, Mom's toenail, Callus, Left Hand, and Pinky Eye. This brings us to 41 total trinket effects!
 
 [h1] All Current Trinket Effects [/h1][list]
 [*]Locust of Conquest - spawn extra locusts
@@ -48,15 +46,24 @@ Equality!, Crow Heart, Store Credit , Your Soul , Judas' Tongue
 [*]Judas' Tongue- taking a devil deal has a chance to drop a black heart
 [*]Extension Cord - Familiars gain Tech Zero tears
 [*]Baby-Bender- Familiars have more range and better homing
+[*]Ring Worm - tears up
+[*]Pulse Worm - dmg up
+[*]Ouroboros Worm - tears + luck up
+[*]Rainbow Worm - tears up
+[*]Mom's Toenail- more frequent stomping, and some stomps target and slow enemies
+[*]Callus - speed up
+[*]The Left Hand - Opening red chests has a chance to spawn black hearts
+[*]Pinky Eye - Luck up
 [/list]
 [h1]Updates:[/h1]
+-Worms update: 8 effects- Pulse Worm, Ouroboros Worm, Rainbow Worm, Ring Worm, Mom's toenail, Callus, Left Hand, and Pinky Eye 
 -Mini update: Baby-bender + extension cord added
 -Content update 2: 5 new effects: 
 Equality!, Crow Heart, Store Credit , Your Soul , Judas' Tongue
 -Content update 1: 4 new trinket effects: Pay To Win, Store Key, Hairpin, and Safety Scissors
 -Mini update: Now supports EID!
 </description>
-    <version>1.5</version>
+    <version>1.6</version>
     <visibility>Public</visibility>
     <tag id="Items"/>
     <tag id="Trinkets"/>

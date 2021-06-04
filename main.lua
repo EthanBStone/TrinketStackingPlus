@@ -77,18 +77,36 @@ Extension cord laser: Subtype 2
 
 *Baby-Bender: Familiars have more range and better homing
 
+===Worms Update===
+*Ring Worm - tears up
+
+*Pulse Worm - dmg up
+
+*Ouroboros Worm - tears + luck up
+
+*Rainbow Worm - tears up
+
+*Mom's Toenail- more frequent stomping, and some stomps target and slow enemies
+
+*Callus - speed up
+
+*The Left Hand - Opening red chests has a chance to spawn black hearts
+
+*Pinky Eye - Luck up, meaning better chance to poison
+
 ====BUGS====
 *Continuing the run with fish tail will give you a chance to duplicate flies/spiders
 *Wooden Cross's shield will stay on isaac when you drop it after it replenishes via holy card trigger
 *Store key, vibrant/dim bulbs damage is not affected by dmg multipliers like soy milk or polyphemus
 *Crow Heart doesnt give iframes
 
-*Do some more testing w rotten penny and apple of sodom to make sure they arent broken
-
+*Need to fix cache checking when you already have 1 of the trinket. intead of making playerflag a bool, make it be the trinket multiplier the player has, so if it gets reduced or increased we can call a cache check
 ]]--
 
 TrinketStacking.DEBUG = 0 --ENABLES DEBUG MODE! Make sure this is 0 unless you are testing the mod
 
+local gameStartedCheck = 0 
+local pickupCacheCD = 0 --Makes it so cache can only update every few frames
 
 --Check for store key at the start of the game
 local initialStoreKeyCheck = 0
@@ -99,9 +117,7 @@ function TrinketStacking:onStart(continuedRun)
 
 	end
 	if GameState.StoreKeyData == nil or continuedRun == false then GameState.StoreKeyData = {0,0,0,0,0,0,0,0} end
-	if GameState.StoreKeyFlag == nil or continuedRun == false then GameState.StoreKeyFlag = {0,0,0,0,0,0,0,0} end
-	initialStoreKeyCheck = 1
-
+	gameStartedCheck = 0 
 end
 
 function TrinketStacking:onGameExit(bool)
@@ -115,6 +131,15 @@ local myosotisFlag = 0
 --Makes sure hairpin only triggers once per boss room
 local hairpinTriggered = 0
 
+local cacheUpdateTrinkets = {
+	["Store Key"] = {id = 83, cache = {CacheFlag.CACHE_DAMAGE}, playerFlags = {0,0,0,0,0,0,0,0}}, 
+	["Pulse Worm"] = {id = 9, cache = {CacheFlag.CACHE_DAMAGE}, playerFlags = {0,0,0,0,0,0,0,0}}, 
+	["Ring Worm"] = {id = 11, cache = {CacheFlag.CACHE_FIREDELAY}, playerFlags = {0,0,0,0,0,0,0,0}}, 
+	["Ouroboros Worm"] = {id = 96, cache = {CacheFlag.CACHE_FIREDELAY, CacheFlag.CACHE_LUCK}, playerFlags = {0,0,0,0,0,0,0,0}}, 
+	["Rainbow Worm"] = {id = 64, cache = {CacheFlag.CACHE_FIREDELAY}, playerFlags = {0,0,0,0,0,0,0,0}}, 
+	["Callus"] = {id = 14, cache = {CacheFlag.CACHE_SPEED}, playerFlags = {0,0,0,0,0,0,0,0}}, 
+	["Pinky Eye"] = {id = 30, cache = {CacheFlag.CACHE_LUCK}, playerFlags = {0,0,0,0,0,0,0,0}}, 
+}
 
 function TrinketStacking:onUpdate()
 	--DEBUG ONLY spawns items
@@ -272,39 +297,78 @@ function TrinketStacking:onUpdate()
 
 	end
 
-	--Store key flagging
+	--Flagging for cache changing trinkets
 	for i = 1, game:GetNumPlayers() do
-		if GameState.StoreKeyFlag ~= nil then
-			if GameState.StoreKeyFlag[i] == 0 then
-				if player:GetTrinketMultiplier(TrinketType.TRINKET_STORE_KEY) > 1 then
-					--print("Player picked up store key")
-					GameState.StoreKeyFlag[i] = 1
-					player:AddCacheFlags(CacheFlag.CACHE_DAMAGE)
-					player:EvaluateItems()
-									
+		player = game:GetPlayer(i)
+		for _, trinket in pairs(cacheUpdateTrinkets) do
+			if trinket.playerFlags[i] ~= nil then
+				--Flag trinket if they didnt already have it
+				if trinket.playerFlags[i] == 0 then
+					if player:GetTrinketMultiplier(trinket.id) > 1 then
+						--print("Player picked up worm")
+						trinket.playerFlags[i] = 1
+						for x, caches in pairs(trinket.cache) do
+							player:AddCacheFlags(caches)				
+						end
+						player:EvaluateItems()						
+					end
+				--Unflag trinket if the player doesn't have it anymore
+				elseif trinket.playerFlags[i] == 1 then
+					if player:GetTrinketMultiplier(trinket.id) <= 1 then
+						--print("Player dropped worm")
+						trinket.playerFlags[i] = 0
+						for x, caches in pairs(trinket.cache) do
+							player:AddCacheFlags(caches)				
+						end
+						player:EvaluateItems()						
+					end		
 				end
-			--Unflag store key if the player doesn't have it anymore
-			elseif GameState.StoreKeyFlag[i] == 1 then
-				if player:GetTrinketMultiplier(TrinketType.TRINKET_STORE_KEY) <= 1 then
-						--print("Player dropped store key")
-						GameState.StoreKeyFlag[i] = 0
-						player:AddCacheFlags(CacheFlag.CACHE_DAMAGE)
-						player:EvaluateItems()
-				end		
+			end			
+		end
+	
+	end
+
+	--Update cache at start of game
+	if gameStartedCheck == 0 then
+		gameStartedCheck = 1 
+		for i = 1, game:GetNumPlayers()do
+			player = game:GetPlayer(i)
+			player:AddCacheFlags(CacheFlag.CACHE_DAMAGE)
+			player:AddCacheFlags(CacheFlag.CACHE_SHOTSPEED)
+			player:AddCacheFlags(CacheFlag.CACHE_FIREDELAY)
+			player:AddCacheFlags(CacheFlag.CACHE_TEARFLAG)	
+			player:AddCacheFlags(CacheFlag.CACHE_SPEED)	
+			player:AddCacheFlags(CacheFlag.CACHE_LUCK)
+			player:EvaluateItems()					
 			
+		end	
+	end
+
+	--Stomping for Mom's Toenail
+	if ((25 * 30) + game:GetFrameCount() ) % (30 * 35) == 1 then
+		for i = 1, game:GetNumPlayers() do
+			player = game:GetPlayer(i)	
+			if player:GetTrinketMultiplier(TrinketType.TRINKET_MOMS_TOENAIL) > 1 then
+				local maxFeet = player:GetTrinketMultiplier(TrinketType.TRINKET_MOMS_TOENAIL) - 1
+				local currFeet = 0
+				for _, ent in pairs(Isaac.FindInRadius(player.Position, 1200, EntityPartition.ENEMY)) do
+					if currFeet >= maxFeet then	
+						break
+					end
+					if ent:IsVulnerableEnemy() then
+						currFeet =  currFeet + 1
+						local slowColor = Color(1, 0.9, 0.9, 1, 0, 0, 0)
+						ent:AddSlowing(EntityRef(player), 30, 0.5, slowColor)
+						Isaac.Spawn(1000, 29, 0, ent.Position, Vector(0,0), nil)				
+					end
+				end			
 			end
+
 		end
 	end
 
-	if GameState.StoreKeyFlag ~= nil and initialStoreKeyCheck == 1 then
-		initialStoreKeyCheck = 2
-		for i = 1, game:GetNumPlayers()do
-			if GameState.StoreKeyFlag[i] >= 1 and player:GetTrinketMultiplier(TrinketType.TRINKET_STORE_KEY) > 1 then
-					player = game:GetPlayer(i)
-					player:AddCacheFlags(CacheFlag.CACHE_DAMAGE)
-					player:EvaluateItems()			
-			end
-		end	
+	if game:GetFrameCount() % 5 == 1 then
+		pickupCacheCD = 0
 	end
 end
 
@@ -395,11 +459,6 @@ function TrinketStacking:onHostileRoomStart()
 				end	
 			end
 		end
-	
-
-		
-
-
 	end	
 end
 
@@ -413,7 +472,6 @@ function TrinketStacking:onAngelKill(ent)
 				rng = RNG()
 				for i = 1, (player:GetTrinketMultiplier(TrinketType.TRINKET_FILIGREE_FEATHERS) - 1) do
 					--print("Triggered filigree soul heart!")
-					
 					Isaac.Spawn(EntityType.ENTITY_PICKUP, PickupVariant.PICKUP_HEART, HeartSubType.HEART_SOUL, ent.Position, Vector(-5 + rng:RandomInt(10),-5 + rng:RandomInt(10) ), player)
 				end
 			end
@@ -492,9 +550,6 @@ function TrinketStacking:onNewLevel()
 			myosotisFlag = 1
 		end
 	end
-
-	
-	
 
 end
 
@@ -627,14 +682,49 @@ function TrinketStacking:onCacheEval(player, cacheFlag)
 	
 	end
 	if cacheFlag == CacheFlag.CACHE_DAMAGE then
+		--Apply Pulse Worm
+		if cacheUpdateTrinkets["Pulse Worm"].playerFlags[pNum] == 1 then
+			player.Damage = player.Damage  + 0.25 + 0.6 * (player:GetTrinketMultiplier(TrinketType.TRINKET_PULSE_WORM) - 1)
+		
+		end	
 		player.Damage = player.Damage + bulbBoosts.DMG + storeKeyDmg
 	end
+	if cacheFlag == CacheFlag.CACHE_FIREDELAY then
+		--Apply Ring Worm
+		if cacheUpdateTrinkets["Ring Worm"].playerFlags[pNum] == 1 then
+			player.MaxFireDelay = player.MaxFireDelay  - 1 - (1.5 * (player:GetTrinketMultiplier(TrinketType.TRINKET_RING_WORM) - 1))
+		
+		end	
+		--Apply Ouroboros Worm
+		if cacheUpdateTrinkets["Ouroboros Worm"].playerFlags[pNum] == 1 then
+			player.MaxFireDelay = player.MaxFireDelay  - 1 - (1.5 * (player:GetTrinketMultiplier(TrinketType.TRINKET_OUROBOROS_WORM) - 1))
+		
+		end	
+		--Apply Rainbow worm
+		if cacheUpdateTrinkets["Rainbow Worm"].playerFlags[pNum] == 1 then
+			player.MaxFireDelay = player.MaxFireDelay  - 1 - (1.5 * (player:GetTrinketMultiplier(TrinketType.TRINKET_RAINBOW_WORM) - 1))
+		
+		end	
+		player.MaxFireDelay = player.MaxFireDelay 
+	end
 	if cacheFlag == CacheFlag.CACHE_SPEED then
+		if cacheUpdateTrinkets["Callus"].playerFlags[pNum] == 1 then
+			player.MoveSpeed = player.MoveSpeed + 0.1 * (player:GetTrinketMultiplier(TrinketType.TRINKET_CALLUS) - 1)
+		end
 		player.MoveSpeed = player.MoveSpeed + bulbBoosts.SPEED
 	end
 	if cacheFlag == CacheFlag.CACHE_LUCK then
+		--Apply Ouroboros Worm
+		if cacheUpdateTrinkets["Ouroboros Worm"].playerFlags[pNum] == 1 then
+			player.Luck = player.Luck + (1.5 * (player:GetTrinketMultiplier(TrinketType.TRINKET_OUROBOROS_WORM) - 1))
+		end		
+		--Apply Pinky Eye
+		if cacheUpdateTrinkets["Pinky Eye"].playerFlags[pNum] == 1 then
+			player.Luck = player.Luck + (2 * (player:GetTrinketMultiplier(TrinketType.TRINKET_PINKY_EYE) - 1))
+		end				
 		player.Luck = player.Luck + bulbBoosts.LUCK
 	end
+
 end
 
 function TrinketStacking:onPlayerUpdate(player) 
@@ -791,8 +881,6 @@ function TrinketStacking:onCoinPickup(pickup, ent, bool)
 			end		
 		end	
 	end
-
-
 end
 
 --On heart pickup, for apple of sodom
@@ -1047,6 +1135,58 @@ function TrinketStacking:onTearUpdate(tear)
 end
 
 
+--On Red Chest open, for the Left Hand
+function TrinketStacking:onRedChestOpen(pickup, ent, bool)
+	if ent.Type == EntityType.ENTITY_PLAYER and pickup:GetData().LHAND_CHECK == nil then
+		pickup:GetData().LHAND_CHECK = 1
+		player = ent:ToPlayer()
+		--Left Hand
+		if player:GetTrinketMultiplier(TrinketType.TRINKET_LEFT_HAND) > 1 then
+			rng = player:GetTrinketRNG(TrinketType.TRINKET_LEFT_HAND)
+			rngRoll = rng:RandomInt(100)
+			rngChance = (5 + 15 * (player:GetTrinketMultiplier(TrinketType.TRINKET_LEFT_HAND) - 1) )
+			--print("Roll: " .. rngRoll .. "|" .. rngChance)	
+			if rngRoll <= rngChance then 
+				Isaac.Spawn(EntityType.ENTITY_PICKUP, PickupVariant.PICKUP_HEART, HeartSubType.HEART_BLACK, pickup.Position, Vector(-5 + rng:RandomInt(10),-5 + rng:RandomInt(10) ), player)	
+			end		
+		end	
+	end
+end
+
+--On trinket pickup, to trigger cache evals
+function TrinketStacking:onTrinketPickup(pickup, ent, bool)
+	
+	if ent.Type == EntityType.ENTITY_PLAYER then
+		player = ent:ToPlayer()
+		if not player:IsHoldingItem() and player.ItemHoldCooldown == 0 and not pickup:IsShopItem() and pickupCacheCD == 0 then
+			--print("trigger")
+			pickupCacheCD = 1
+			player:AddCacheFlags(CacheFlag.CACHE_DAMAGE)
+			player:AddCacheFlags(CacheFlag.CACHE_SHOTSPEED)
+			player:AddCacheFlags(CacheFlag.CACHE_FIREDELAY)
+			player:AddCacheFlags(CacheFlag.CACHE_TEARFLAG)	
+			player:AddCacheFlags(CacheFlag.CACHE_SPEED)	
+			player:AddCacheFlags(CacheFlag.CACHE_LUCK)
+			player:EvaluateItems()			
+			
+			--[[
+			for _, trinket in pairs(cacheUpdateTrinkets) do
+				if trinket.id == pickup.SubType or trinket.id + 32768  == pickup.SubType then
+					for x, caches in pairs(trinket.cache) do
+						player:AddCacheFlags(caches)				
+					end	
+					player:EvaluateItems()	
+					break
+				end
+			end
+			]]--
+			
+		end
+
+	end
+end
+
+
 TrinketStacking:AddCallback(ModCallbacks.MC_POST_UPDATE, TrinketStacking.onUpdate)
 TrinketStacking:AddCallback(ModCallbacks.MC_POST_RENDER, TrinketStacking.onRender)
 TrinketStacking:AddCallback(ModCallbacks.MC_POST_NEW_ROOM, TrinketStacking.onNewRoom)
@@ -1102,8 +1242,12 @@ TrinketStacking:AddCallback(ModCallbacks.MC_PRE_PICKUP_COLLISION, TrinketStackin
 TrinketStacking:AddCallback(ModCallbacks.MC_PRE_PICKUP_COLLISION, TrinketStacking.onShopPickup, PickupVariant.PICKUP_COLLECTIBLE)
 TrinketStacking:AddCallback(ModCallbacks.MC_PRE_PICKUP_COLLISION, TrinketStacking.onShopPickup, PickupVariant.PICKUP_TRINKET)
 
+--For Left Hand
+TrinketStacking:AddCallback(ModCallbacks.MC_PRE_PICKUP_COLLISION, TrinketStacking.onRedChestOpen, PickupVariant.PICKUP_REDCHEST)
 --For extenstion cord
 TrinketStacking:AddCallback(ModCallbacks.MC_POST_TEAR_UPDATE, TrinketStacking.onTearUpdate)
+--Update Cache when picking up trinkets
+TrinketStacking:AddCallback(ModCallbacks.MC_PRE_PICKUP_COLLISION, TrinketStacking.onTrinketPickup, PickupVariant.PICKUP_TRINKET)
 ---
 --
 --EID Descriptions
@@ -1188,7 +1332,25 @@ if EID and not changedEID then
 		--Extension Cord
 		{Id = 125, Desc = "Most of your familiars' tears will be Tech Zero electrical tears, with a small chance to gain a Jacob's Ladder effect"},		
 		--Baby-Bender
-		{Id = 127, Desc = "Familiars have more range and better homing"},	
+		{Id = 127, Desc = "Familiars have more range and better homing"},
+
+		--Worms Update
+		--Pulse Worm
+		{Id = 9, Desc = "Damage up"},
+		--Ring Worm
+		{Id = 11, Desc = "Tears up"},
+		--Ouroboros Worm
+		{Id = 96, Desc = "Tears and luck up"},
+		--Rainbow Worm
+		{Id = 64, Desc = "Tears up"},
+		--Mom's Toenail
+		{Id = 16, Desc = "More frequent stomping, and some stomps target and slow enemies"},
+		--Callus
+		{Id = 14, Desc = "Speed up"},
+		--The Left Hand 
+		{Id = 61, Desc = "Opening red chests has a chance to spawn black hearts"},
+		--The Pinky Eye
+		{Id = 30, Desc = "Luck up, meaning better poison chance"},
 	}
 
 	for key, item in pairs(trinketInfo) do

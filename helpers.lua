@@ -6,7 +6,7 @@ local game = Game()
 
 local Helpers = {}
 
-print("loaded helpers")
+--print("loaded helpers")
 
 --Function to spawn item from a certain pool w/ a certain price
 function Helpers:spawnItemFromPool(pool, pos, price, seed)
