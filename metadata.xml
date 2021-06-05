@@ -7,63 +7,64 @@
 
 Mom's Box and Golden Trinket's trinket modifying abilities are a really cool mechanic in the game, however they don't work with almost HALF of the trinkets in the game. There are over 80 trinkets that have no effect at all with Mom's Box, and having the Golden version does nothing either. That's where my mod comes in
 
-Trinket Stacking + adds new trinket stacking effects to 41 trinkets that previously lacked them. I designed these effects to be more powerful with the more trinket multiplier you have, so having Mom's Box + the Gold version of a trinket will be even more powerful!
+Trinket Stacking + adds new trinket stacking effects to 43 trinkets that previously lacked them. I designed these effects to be more powerful with the more trinket multiplier you have, so having Mom's Box + the Gold version of a trinket will be even more powerful!
 
 [h1]Latest Updates[/h1]
-Worms Update! 8 new effects: Pulse Worm, Ouroboros Worm, Rainbow Worm, Ring Worm, Mom's toenail, Callus, Left Hand, and Pinky Eye. This brings us to 41 total trinket effects!
+Mini update
+-Better EID support! The description for the trinket's stacking effect will only display if you are carrying mom's box, if you are viewing a golden trinket, or if you are already carrying/have gulped the trinket
+-2 new trinket effects: Strange Key and Flat Worm
+
+-Worms Update! 8 new effects: Pulse Worm, Ouroboros Worm, Rainbow Worm, Ring Worm, Mom's toenail, Callus, Left Hand, and Pinky Eye. 
 
 [h1] All Current Trinket Effects [/h1][list]
-[*]Locust of Conquest - spawn extra locusts
-[*]Locust of Death-spawn extra locusts
-[*]Locust of Famine-spawn extra locusts
-[*]Locust of Pestilence-spawn extra locusts
-[*]Locust of War-spawn extra locusts
-[*]Filigree Feather -angel statues drop soul hearts
-[*]Wicked Crown-extra chests in the dark room
-[*]Holy Crown-spawn extra chests in the chest
+[*]Locust of Conquest/Death/ Famine/Pestilence/War - Chance to spawn extra locusts
+[*]Filigree Feather -Angel statues drop soul hearts
+[*]Wicked Crown- Spawn extra chests in the dark room
+[*]Holy Crown-Spawn extra chests in the chest
 [*]Bloody Crown-moms heart drops boss items
 [*]Silver Dollar-moms heart drops a buyable shop item
-[*]Wooden Cross - chance regain shield on room clear
-[*]???'s Soul- extra copy 
-[*]Isaac's Head - extra copy 
-[*]Vibrant Bulb - extra boosts 
-[*]Dim Bulb - Boosts apply as long as the item isnt FULLY charged
+[*]Wooden Cross - Chance regain shield on room clear
+[*]???'s Soul - Extra copy of the familiar 
+[*]Isaac's Head - Extra copy of the familiar
+[*]Vibrant Bulb - Extra boosts 
+[*]Dim Bulb - Extra boosts that apply as long as the item isnt FULLY charged
 [*]Apple of Sodom - More spiders spawned
-[*]Fish Tail- chance for extra flies/spiders spawned
-[*]AAA Battery-chance to drop micro batteries on room clear
+[*]Fish Tail - Chance for extra flies/spiders spawned
+[*]AAA Battery - Chance to drop micro batteries on room clear
 [*]Fragmented Card - Normal Secret rooms have a chance to spawn a sack when entering 
-[*]Stem Cell-drop full red heart on ground at start of floor for every multiplier
-[*]Myosotis - chance to duplicate the carried over pickups
-[*]Rotten Penny - chance for more flies on coin pickup
+[*]Stem Cell - Drop full red heart on ground at start of floor for every multiplier
+[*]Myosotis - Chance to duplicate the carried over pickups
+[*]Rotten Penny - Chance for more flies on coin pickup
 [*]Pay to Win - Restock boxes appear in blue womb treasure rooms, and chest/dark room
 [*]Store Key - Gives a damage up for each shop you enter while holding the key
 [*]Hairpin - Killing the boss room boss will drop a battery
-[*]Safety Scissors - chance to resist explosive damage
+[*]Safety Scissors - Chance to resist explosive damage
 [*]Equality!- Picking up a consumable gives a chance to spawn the consumable type that Isaac has the least of
-[*]Crow Heart- Chance to convert damage to “fake damage” like dull razor
-[*]Store Credit - chance to not be used/chance to spawn another copy of the trinket, otherwise spawns coins
-[*]Your Soul -chance to not be used or spawn an extra copy, otherwise spawns a black sack
-[*]Judas' Tongue- taking a devil deal has a chance to drop a black heart
+[*]Crow Heart - Chance to convert damage to “fake damage” like dull razor
+[*]Store Credit - Chance to not be used/chance to spawn another copy of the trinket, otherwise spawns coins
+[*]Your Soul - Chance to not be used or spawn an extra copy, otherwise spawns a black sack
+[*]Judas' Tongue - Taking a devil deal has a chance to drop a black heart
 [*]Extension Cord - Familiars gain Tech Zero tears
 [*]Baby-Bender- Familiars have more range and better homing
-[*]Ring Worm - tears up
-[*]Pulse Worm - dmg up
-[*]Ouroboros Worm - tears + luck up
-[*]Rainbow Worm - tears up
-[*]Mom's Toenail- more frequent stomping, and some stomps target and slow enemies
-[*]Callus - speed up
+[*]Ring Worm - Tears up
+[*]Pulse Worm - Damage up
+[*]Ouroboros Worm - Tears + luck up
+[*]Rainbow Worm - Tears up
+[*]Mom's Toenail- More frequent stomping, and some stomps target and slow enemies
+[*]Callus - Speed up
 [*]The Left Hand - Opening red chests has a chance to spawn black hearts
 [*]Pinky Eye - Luck up
+[*]Strange Key - Gives a chance to replace any non quest item pedestal with pandoras box
+[*]Flat Worm - Damage up
 [/list]
+[h1]External Item Descriptions[/h1]
+Now includes better EID support! The description for the trinket's stacking effect will only display if you are carrying mom's box, if you are viewing a golden trinket, or if you are already carrying/have gulped the trinket
 [h1]Updates:[/h1]
+-Mini Update: Better EID support and 2 new effects: flat worm and strange key
 -Worms update: 8 effects- Pulse Worm, Ouroboros Worm, Rainbow Worm, Ring Worm, Mom's toenail, Callus, Left Hand, and Pinky Eye 
--Mini update: Baby-bender + extension cord added
--Content update 2: 5 new effects: 
-Equality!, Crow Heart, Store Credit , Your Soul , Judas' Tongue
--Content update 1: 4 new trinket effects: Pay To Win, Store Key, Hairpin, and Safety Scissors
--Mini update: Now supports EID!
+-Past updates: 11 new effects + basic EID support
 </description>
-    <version>1.6</version>
+    <version>1.7</version>
     <visibility>Public</visibility>
     <tag id="Items"/>
     <tag id="Trinkets"/>

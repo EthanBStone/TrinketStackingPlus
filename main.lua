@@ -94,6 +94,10 @@ Extension cord laser: Subtype 2
 
 *Pinky Eye - Luck up, meaning better chance to poison
 
+===Next Update===
+*Strange Key - Chance to replace non-quest item pedestals with Pandora's Box
+
+*Flat Worm - Damage up
 ====BUGS====
 *Continuing the run with fish tail will give you a chance to duplicate flies/spiders
 *Wooden Cross's shield will stay on isaac when you drop it after it replenishes via holy card trigger
@@ -106,7 +110,6 @@ Extension cord laser: Subtype 2
 TrinketStacking.DEBUG = 0 --ENABLES DEBUG MODE! Make sure this is 0 unless you are testing the mod
 
 local gameStartedCheck = 0 
-local pickupCacheCD = 0 --Makes it so cache can only update every few frames
 
 --Check for store key at the start of the game
 local initialStoreKeyCheck = 0
@@ -117,6 +120,7 @@ function TrinketStacking:onStart(continuedRun)
 
 	end
 	if GameState.StoreKeyData == nil or continuedRun == false then GameState.StoreKeyData = {0,0,0,0,0,0,0,0} end
+	if GameState.PANDORAS_BOX_CHECKED == nil or continuedRun == false then GameState.PANDORAS_BOX_CHECKED = {} end
 	gameStartedCheck = 0 
 end
 
@@ -139,9 +143,10 @@ local cacheUpdateTrinkets = {
 	["Rainbow Worm"] = {id = 64, cache = {CacheFlag.CACHE_FIREDELAY}, playerFlags = {0,0,0,0,0,0,0,0}}, 
 	["Callus"] = {id = 14, cache = {CacheFlag.CACHE_SPEED}, playerFlags = {0,0,0,0,0,0,0,0}}, 
 	["Pinky Eye"] = {id = 30, cache = {CacheFlag.CACHE_LUCK}, playerFlags = {0,0,0,0,0,0,0,0}}, 
+	["Flat Worm"] = {id = 12, cache = {CacheFlag.CACHE_DAMAGE}, playerFlags = {0,0,0,0,0,0,0,0}}, 
 }
 
-function TrinketStacking:onUpdate()
+function TrinketStacking:onUpdate()	
 	--DEBUG ONLY spawns items
 	if TrinketStacking.DEBUG == 1 and game:GetFrameCount() == 1 then
 		print("DEBUG MODE ENABLED FOR TRINKET STACKING PLUS")
@@ -303,25 +308,13 @@ function TrinketStacking:onUpdate()
 		for _, trinket in pairs(cacheUpdateTrinkets) do
 			if trinket.playerFlags[i] ~= nil then
 				--Flag trinket if they didnt already have it
-				if trinket.playerFlags[i] == 0 then
-					if player:GetTrinketMultiplier(trinket.id) > 1 then
-						--print("Player picked up worm")
-						trinket.playerFlags[i] = 1
-						for x, caches in pairs(trinket.cache) do
-							player:AddCacheFlags(caches)				
-						end
-						player:EvaluateItems()						
+				if player:GetTrinketMultiplier(trinket.id) ~= trinket.playerFlags[i] then
+					--print("Player picked up worm")
+					trinket.playerFlags[i] = player:GetTrinketMultiplier(trinket.id)
+					for x, caches in pairs(trinket.cache) do
+						player:AddCacheFlags(caches)				
 					end
-				--Unflag trinket if the player doesn't have it anymore
-				elseif trinket.playerFlags[i] == 1 then
-					if player:GetTrinketMultiplier(trinket.id) <= 1 then
-						--print("Player dropped worm")
-						trinket.playerFlags[i] = 0
-						for x, caches in pairs(trinket.cache) do
-							player:AddCacheFlags(caches)				
-						end
-						player:EvaluateItems()						
-					end		
+					player:EvaluateItems()						
 				end
 			end			
 		end
@@ -366,9 +359,31 @@ function TrinketStacking:onUpdate()
 
 		end
 	end
+	
+	--Checking for Strange key
+	if game:GetFrameCount() % 30 == 1 then
+		for i = 1, game:GetNumPlayers() do
+			player = game:GetPlayer(i)	
+			local checkedSize = 0
+			local hasItem = {0,0}
+			for slot = 1, 2 do --For both active item slots
+				local checkedSize = 0
+				--Check to see if item has already been checked
+				for _, item in pairs(GameState.PANDORAS_BOX_CHECKED) do
+					checkedSize = checkedSize + 1
+					if item == player:GetActiveItem(slot-1) then
+						hasItem[slot] = 1
+					end
+				end
+				
+				if hasItem[slot] == 0 then
+					--print("Add active item: " .. player:GetActiveItem(slot-1))
+					GameState.PANDORAS_BOX_CHECKED[checkedSize + 1] = player:GetActiveItem(slot-1)
+				end
+				
+			end
 
-	if game:GetFrameCount() % 5 == 1 then
-		pickupCacheCD = 0
+		end
 	end
 end
 
@@ -411,6 +426,7 @@ function TrinketStacking:onNewRoom()
 			
 		end
 	end
+	
 	--Code for ???'s Soul and Isaac's Head
 	famCount = 2 --Amount of familiars in the following tables. ???'s soul + isaac's head = 2
 	familiarTrinket = {TrinketType.TRINKET_SOUL, TrinketType.TRINKET_ISAACS_HEAD}
@@ -633,97 +649,102 @@ local DimBulbBoosts =  {
 	LUCK = 1
 }
 function TrinketStacking:onCacheEval(player, cacheFlag)
-	
-	local hasChargedActive = 0
-	local hasUnChargedActive = 0
-	local bulbTrinketToCheck = nil
-	--This will be the total amount of boosts gained from bulb trinkets
-	local bulbBoosts =  {
-		SPEED = 0,
-		DMG = 0,
-		LUCK = 0
-	}
-	--Check for bulb trinket conditions
-	if player:GetTrinketMultiplier(TrinketType.TRINKET_VIBRANT_BULB)  > 1 or player:GetTrinketMultiplier(TrinketType.TRINKET_DIM_BULB) > 1 then
-		--Check every active slot for an uncharged item
-		
-		for slot = 0, 2 do
-			if player:GetActiveItem(slot) ~= 0 then
-				if player:NeedsCharge(slot) then
-					hasUnChargedActive = hasUnChargedActive + 1
-				else
-					hasChargedActive = hasChargedActive + 1
-				end	
+	if player:GetData().pNum ~= nil then
+		local hasChargedActive = 0
+		local hasUnChargedActive = 0
+		local bulbTrinketToCheck = nil
+		--This will be the total amount of boosts gained from bulb trinkets
+		local bulbBoosts =  {
+			SPEED = 0,
+			DMG = 0,
+			LUCK = 0
+		}
+		--Check for bulb trinket conditions
+		if player:GetTrinketMultiplier(TrinketType.TRINKET_VIBRANT_BULB)  > 1 or player:GetTrinketMultiplier(TrinketType.TRINKET_DIM_BULB) > 1 then
+			--Check every active slot for an uncharged item
+			
+			for slot = 0, 2 do
+				if player:GetActiveItem(slot) ~= 0 then
+					if player:NeedsCharge(slot) then
+						hasUnChargedActive = hasUnChargedActive + 1
+					else
+						hasChargedActive = hasChargedActive + 1
+					end	
+				end
 			end
-		end
-		
-		if hasUnChargedActive > 0 and player:GetTrinketMultiplier(TrinketType.TRINKET_DIM_BULB) > 1 then
 			
-			bulbBoosts.SPEED = bulbBoosts.SPEED + DimBulbBoosts.SPEED * (player:GetTrinketMultiplier(TrinketType.TRINKET_DIM_BULB) - 1)
-			bulbBoosts.DMG = bulbBoosts.DMG + DimBulbBoosts.DMG * (player:GetTrinketMultiplier(TrinketType.TRINKET_DIM_BULB) - 1)
-			bulbBoosts.LUCK = bulbBoosts.DMG + DimBulbBoosts.LUCK * (player:GetTrinketMultiplier(TrinketType.TRINKET_DIM_BULB) - 1)
-			--print("Bulb: Dim: Dmg = " .. bulbBoosts.DMG)
-		end
-		if hasChargedActive > 0 and player:GetTrinketMultiplier(TrinketType.TRINKET_VIBRANT_BULB) > 1 then
-			bulbBoosts.SPEED = bulbBoosts.SPEED + VibrantBulbBoosts.SPEED * (player:GetTrinketMultiplier(TrinketType.TRINKET_VIBRANT_BULB) - 1)
-			bulbBoosts.DMG = bulbBoosts.DMG + VibrantBulbBoosts.DMG * (player:GetTrinketMultiplier(TrinketType.TRINKET_VIBRANT_BULB) - 1)
-			bulbBoosts.LUCK = bulbBoosts.DMG + VibrantBulbBoosts.LUCK * (player:GetTrinketMultiplier(TrinketType.TRINKET_VIBRANT_BULB) - 1)
+			if hasUnChargedActive > 0 and player:GetTrinketMultiplier(TrinketType.TRINKET_DIM_BULB) > 1 then
+				
+				bulbBoosts.SPEED = bulbBoosts.SPEED + DimBulbBoosts.SPEED * (player:GetTrinketMultiplier(TrinketType.TRINKET_DIM_BULB) - 1)
+				bulbBoosts.DMG = bulbBoosts.DMG + DimBulbBoosts.DMG * (player:GetTrinketMultiplier(TrinketType.TRINKET_DIM_BULB) - 1)
+				bulbBoosts.LUCK = bulbBoosts.DMG + DimBulbBoosts.LUCK * (player:GetTrinketMultiplier(TrinketType.TRINKET_DIM_BULB) - 1)
+				--print("Bulb: Dim: Dmg = " .. bulbBoosts.DMG)
+			end
+			if hasChargedActive > 0 and player:GetTrinketMultiplier(TrinketType.TRINKET_VIBRANT_BULB) > 1 then
+				bulbBoosts.SPEED = bulbBoosts.SPEED + VibrantBulbBoosts.SPEED * (player:GetTrinketMultiplier(TrinketType.TRINKET_VIBRANT_BULB) - 1)
+				bulbBoosts.DMG = bulbBoosts.DMG + VibrantBulbBoosts.DMG * (player:GetTrinketMultiplier(TrinketType.TRINKET_VIBRANT_BULB) - 1)
+				bulbBoosts.LUCK = bulbBoosts.DMG + VibrantBulbBoosts.LUCK * (player:GetTrinketMultiplier(TrinketType.TRINKET_VIBRANT_BULB) - 1)
+				
+				--print("Bulb: Vibrant: Dmg = " .. bulbBoosts.DMG)
+			end
+		end	
+		
+		pNum = player:GetData().pNum
+		--Store key code
+		local storeKeyDmg = 0
+		if pNum ~= nil and player:GetTrinketMultiplier(TrinketType.TRINKET_STORE_KEY) > 1 and GameState.StoreKeyData[pNum] >= 1 then
 			
-			--print("Bulb: Vibrant: Dmg = " .. bulbBoosts.DMG)
+			storeKeyDmg = 0.15 + GameState.StoreKeyData[pNum] * 0.1
+		
 		end
-	end	
-	
-	pNum = player:GetData().pNum
-	--Store key code
-	local storeKeyDmg = 0
-	if pNum ~= nil and player:GetTrinketMultiplier(TrinketType.TRINKET_STORE_KEY) > 1 and GameState.StoreKeyData[pNum] >= 1 then
-		
-		storeKeyDmg = 0.15 + GameState.StoreKeyData[pNum] * 0.1
-	
-	end
-	if cacheFlag == CacheFlag.CACHE_DAMAGE then
-		--Apply Pulse Worm
-		if cacheUpdateTrinkets["Pulse Worm"].playerFlags[pNum] == 1 then
-			player.Damage = player.Damage  + 0.25 + 0.6 * (player:GetTrinketMultiplier(TrinketType.TRINKET_PULSE_WORM) - 1)
-		
-		end	
-		player.Damage = player.Damage + bulbBoosts.DMG + storeKeyDmg
-	end
-	if cacheFlag == CacheFlag.CACHE_FIREDELAY then
-		--Apply Ring Worm
-		if cacheUpdateTrinkets["Ring Worm"].playerFlags[pNum] == 1 then
-			player.MaxFireDelay = player.MaxFireDelay  - 1 - (1.5 * (player:GetTrinketMultiplier(TrinketType.TRINKET_RING_WORM) - 1))
-		
-		end	
-		--Apply Ouroboros Worm
-		if cacheUpdateTrinkets["Ouroboros Worm"].playerFlags[pNum] == 1 then
-			player.MaxFireDelay = player.MaxFireDelay  - 1 - (1.5 * (player:GetTrinketMultiplier(TrinketType.TRINKET_OUROBOROS_WORM) - 1))
-		
-		end	
-		--Apply Rainbow worm
-		if cacheUpdateTrinkets["Rainbow Worm"].playerFlags[pNum] == 1 then
-			player.MaxFireDelay = player.MaxFireDelay  - 1 - (1.5 * (player:GetTrinketMultiplier(TrinketType.TRINKET_RAINBOW_WORM) - 1))
-		
-		end	
-		player.MaxFireDelay = player.MaxFireDelay 
-	end
-	if cacheFlag == CacheFlag.CACHE_SPEED then
-		if cacheUpdateTrinkets["Callus"].playerFlags[pNum] == 1 then
-			player.MoveSpeed = player.MoveSpeed + 0.1 * (player:GetTrinketMultiplier(TrinketType.TRINKET_CALLUS) - 1)
+		if cacheFlag == CacheFlag.CACHE_DAMAGE then
+			--Apply Pulse Worm
+			if cacheUpdateTrinkets["Pulse Worm"].playerFlags[pNum] >= 2 then
+				player.Damage = player.Damage  + 0.25 + 0.6 * (player:GetTrinketMultiplier(TrinketType.TRINKET_PULSE_WORM) - 1)
+			end
+			--Apply Flat Worm
+			if cacheUpdateTrinkets["Flat Worm"].playerFlags[pNum] >= 2 then
+				player.Damage = player.Damage  + 0.25 + 0.6 * (player:GetTrinketMultiplier(TrinketType.TRINKET_FLAT_WORM) - 1)
+			end				
+			player.Damage = player.Damage + bulbBoosts.DMG + storeKeyDmg
 		end
-		player.MoveSpeed = player.MoveSpeed + bulbBoosts.SPEED
+		if cacheFlag == CacheFlag.CACHE_FIREDELAY then
+			--Apply Ring Worm
+			if cacheUpdateTrinkets["Ring Worm"].playerFlags[pNum] >= 2 then
+				player.MaxFireDelay = player.MaxFireDelay  - 1 - (1.5 * (player:GetTrinketMultiplier(TrinketType.TRINKET_RING_WORM) - 1))
+			
+			end	
+			--Apply Ouroboros Worm
+			if cacheUpdateTrinkets["Ouroboros Worm"].playerFlags[pNum] >= 2 then
+				player.MaxFireDelay = player.MaxFireDelay  - 1 - (1.5 * (player:GetTrinketMultiplier(TrinketType.TRINKET_OUROBOROS_WORM) - 1))
+			
+			end	
+			--Apply Rainbow worm
+			if cacheUpdateTrinkets["Rainbow Worm"].playerFlags[pNum] >= 2 then
+				player.MaxFireDelay = player.MaxFireDelay  - 1 - (1.5 * (player:GetTrinketMultiplier(TrinketType.TRINKET_RAINBOW_WORM) - 1))
+			
+			end	
+			player.MaxFireDelay = player.MaxFireDelay 
+		end
+		if cacheFlag == CacheFlag.CACHE_SPEED then
+			if cacheUpdateTrinkets["Callus"].playerFlags[pNum] >= 2 then
+				player.MoveSpeed = player.MoveSpeed + 0.1 * (player:GetTrinketMultiplier(TrinketType.TRINKET_CALLUS) - 1)
+			end
+			player.MoveSpeed = player.MoveSpeed + bulbBoosts.SPEED
+		end
+		if cacheFlag == CacheFlag.CACHE_LUCK then
+			--Apply Ouroboros Worm
+			if cacheUpdateTrinkets["Ouroboros Worm"].playerFlags[pNum] >= 2 then
+				player.Luck = player.Luck + (1.5 * (player:GetTrinketMultiplier(TrinketType.TRINKET_OUROBOROS_WORM) - 1))
+			end		
+			--Apply Pinky Eye
+			if cacheUpdateTrinkets["Pinky Eye"].playerFlags[pNum] >= 2 then
+				player.Luck = player.Luck + (2 * (player:GetTrinketMultiplier(TrinketType.TRINKET_PINKY_EYE) - 1))
+			end				
+			player.Luck = player.Luck + bulbBoosts.LUCK
+		end	
 	end
-	if cacheFlag == CacheFlag.CACHE_LUCK then
-		--Apply Ouroboros Worm
-		if cacheUpdateTrinkets["Ouroboros Worm"].playerFlags[pNum] == 1 then
-			player.Luck = player.Luck + (1.5 * (player:GetTrinketMultiplier(TrinketType.TRINKET_OUROBOROS_WORM) - 1))
-		end		
-		--Apply Pinky Eye
-		if cacheUpdateTrinkets["Pinky Eye"].playerFlags[pNum] == 1 then
-			player.Luck = player.Luck + (2 * (player:GetTrinketMultiplier(TrinketType.TRINKET_PINKY_EYE) - 1))
-		end				
-		player.Luck = player.Luck + bulbBoosts.LUCK
-	end
+	
 
 end
 
@@ -1153,39 +1174,60 @@ function TrinketStacking:onRedChestOpen(pickup, ent, bool)
 	end
 end
 
---On trinket pickup, to trigger cache evals
-function TrinketStacking:onTrinketPickup(pickup, ent, bool)
-	
-	if ent.Type == EntityType.ENTITY_PLAYER then
-		player = ent:ToPlayer()
-		if not player:IsHoldingItem() and player.ItemHoldCooldown == 0 and not pickup:IsShopItem() and pickupCacheCD == 0 then
-			--print("trigger")
-			pickupCacheCD = 1
-			player:AddCacheFlags(CacheFlag.CACHE_DAMAGE)
-			player:AddCacheFlags(CacheFlag.CACHE_SHOTSPEED)
-			player:AddCacheFlags(CacheFlag.CACHE_FIREDELAY)
-			player:AddCacheFlags(CacheFlag.CACHE_TEARFLAG)	
-			player:AddCacheFlags(CacheFlag.CACHE_SPEED)	
-			player:AddCacheFlags(CacheFlag.CACHE_LUCK)
-			player:EvaluateItems()			
-			
-			--[[
-			for _, trinket in pairs(cacheUpdateTrinkets) do
-				if trinket.id == pickup.SubType or trinket.id + 32768  == pickup.SubType then
-					for x, caches in pairs(trinket.cache) do
-						player:AddCacheFlags(caches)				
-					end	
-					player:EvaluateItems()	
-					break
+
+--On collectible spawned, for strange key
+GameState.PANDORAS_BOX_CHECKED = {}
+local questItemIDs = {
+	550, --Broken Shovel
+	552, --Mom's Shovel
+	238, --Key P1
+	239, --Key P2
+	328, --Negative
+	327, --Polaroid
+	551, --Broken Shovel
+	668, --Dads note
+	633, --Dogma
+	626, --Knife p1
+	627, --Knife p2
+
+}
+function TrinketStacking:onStrangeKeyCheck(pickup)
+	for i = 1, game:GetNumPlayers() do
+		player = game:GetPlayer(i)
+		local canReplace = true
+		local checkedSize = 0
+		if player:GetTrinketMultiplier(TrinketType.TRINKET_STRANGE_KEY) > 1 then
+			--Check to see if item has already been checked
+			for _, item in pairs(GameState.PANDORAS_BOX_CHECKED) do
+				checkedSize = checkedSize + 1
+				if item == pickup.SubType then
+					--print("Table: " .. item .. " pickup: " .. pickup.SubType)
+					--print("Already checked")
+					canReplace = false
 				end
 			end
-			]]--
-			
-		end
-
+			--Check for quest items
+			for _, questItem in pairs(questItemIDs) do
+				if questItem == pickup.SubType then
+					--print("isQuest")
+					canReplace = false
+				end
+			end
+			--Try to replace the item
+			if canReplace then
+				GameState.PANDORAS_BOX_CHECKED[checkedSize + 1] = pickup.SubType
+				rng = player:GetTrinketRNG(TrinketType.TRINKET_STRANGE_KEY)
+				rngRoll = rng:RandomInt(100)
+				rngChance = 5 + 5 * (player:GetTrinketMultiplier(TrinketType.TRINKET_STRANGE_KEY) - 1)
+				--print("Strange key roll: " .. rngRoll .. "|" .. rngChance)
+				if rngRoll <= rngChance then
+					--print("Transform into pandoras box!")
+					pickup:Morph(5, 100, CollectibleType.COLLECTIBLE_BLUE_BOX, true, true, false)
+				end
+			end		
+		end		
 	end
 end
-
 
 TrinketStacking:AddCallback(ModCallbacks.MC_POST_UPDATE, TrinketStacking.onUpdate)
 TrinketStacking:AddCallback(ModCallbacks.MC_POST_RENDER, TrinketStacking.onRender)
@@ -1244,15 +1286,264 @@ TrinketStacking:AddCallback(ModCallbacks.MC_PRE_PICKUP_COLLISION, TrinketStackin
 
 --For Left Hand
 TrinketStacking:AddCallback(ModCallbacks.MC_PRE_PICKUP_COLLISION, TrinketStacking.onRedChestOpen, PickupVariant.PICKUP_REDCHEST)
+
 --For extenstion cord
 TrinketStacking:AddCallback(ModCallbacks.MC_POST_TEAR_UPDATE, TrinketStacking.onTearUpdate)
---Update Cache when picking up trinkets
-TrinketStacking:AddCallback(ModCallbacks.MC_PRE_PICKUP_COLLISION, TrinketStacking.onTrinketPickup, PickupVariant.PICKUP_TRINKET)
+
+--For Strange Key
+TrinketStacking:AddCallback(ModCallbacks.MC_POST_PICKUP_INIT, TrinketStacking.onStrangeKeyCheck, PickupVariant.PICKUP_COLLECTIBLE)
 ---
 --
 --EID Descriptions
 local changedEID = false
-if EID and not changedEID then
+if EID then
+	local trinketInfo = {
+		--Locust of War
+		["113"] = {Name = "Locust of War", Desc = "Adds a chance to spawn extra locusts"},
+		--Locust of Pestilence
+		["114"] = {Name = "Locust of Pestilence", Desc = "Adds a chance to spawn extra locusts"},
+		--Locust of Famine
+		["115"] = {Name = "Locust of Famine", Desc = "Adds a chance to spawn extra locusts"},
+		--Locust of Death
+		["116"] = {Name = "Locust of Death", Desc = "Adds a chance to spawn extra locusts"},
+		--Locust of Conquest
+		["117"] = {Name = "Locust of Conquest", Desc = "Adds a chance to spawn extra locusts"},
+		--Filigree Feather
+		["123"] = {Name = "Filigree Feather", Desc = "Angel statue bosses also drop soul hearts"},
+		--Wicked Crown
+		["161"] = {Name = "Wicked Crown", Desc = "Extra chests spawn at the start of the Dark Room floor"},
+		--Holy Crown
+		["155"] = {Name = "Holy Crown", Desc = "Extra chests spawn at the start of The Chest floor"},
+		--Bloody Crown
+		["111"] = {Name = "Bloody Crown", Desc = "Mom's Heart drops a boss item when killed"},
+		--Silver Dollar
+		["110"] = {Name = "Silver Dollar", Desc = "Mom's Heart drops a buyable shop item when killed"},	
+		--Wooden Cross
+		["121"] = {Name = "Wooden Cross", Desc = "Chance to replenish shield on room clear"},	
+		--???'s Soul
+		["57"] = {Name = "???'s Soul", Desc = "Extra copy of the familiar"},
+		--Isaac's Head
+		["54"] = {Name = "Isaac's Head", Desc = "Extra copy of the familiar"},
+		--Vibrant Bulb
+		["100"] = {Name = "Vibrant Bulb", Desc = "Extra stat boosts when fully charged"},		
+		--Dim Bulb
+		["101"] = {Name = "Dim Bulb", Desc = "Extra stat boosts when partially charged and NOT fully charged"},
+		--Apple of Sodom
+		["140"] = {Name = "Apple of Sodom", Desc = "Chance to spawn extra spiders on heart pickup"},
+		--Fish Tail
+		["94"] = {Name = "Fish Tail", Desc = "Chance to generate extra flies/spiders"},
+		--AAA Battery
+		["3"] = {Name = "AAA Battery", Desc = "Chance to spawn a micro battery on room clear"},			
+		--Fragmented Card
+		["102"] = {Name = "Fragmented Card", Desc = "Chance to spawn extra sacks when entering a secret room"},
+		--Stem Cell
+		["119"] = {Name = "Stem Cell", Desc = "Spawn red hearts in the starting room of each floor"},
+		--Myosotis
+		["137"] = {Name = "Myosotis", Desc = "Chance to duplicate the carried over pickups"},
+		--Rotten Penny
+		["126"] = {Name = "Rotten Penny", Desc = "Chance to spawn extra flies on coin pickup"},
+		
+		--Content Update 1
+		
+		--Pay To Win
+		["112"] = {Name = "Pay To Win", Desc = "Restock boxes appear in Blue Womb treasure rooms, and Chest/Dark Room starting room"},		
+		--Store Key
+		["83"] = {Name = "Store Key", Desc = "Gives a damage up for each shop you enter while holding the store key"},
+		--Safety Scissors
+		["63"] = {Name = "Safety Scissors", Desc = "Chance to resist explosive damage"},
+		--Hairpin
+		["120"] = {Name = "Hairpin", Desc = "Killing the boss room boss drops a battery"},	
+		
+		--Content Update 2
+		
+		--Equality
+		["103"] = {Name = "Equality", Desc = "Picking up a consumable gives a chance to spawn the consumable type that Isaac has the least of"},	
+		--Crow Heart
+		["107"] = {Name = "Crow Heart", Desc = "Change to convert incoming damage into \"fake\" damage like dull razor"},	
+		--Store Credit
+		["13"] = {Name = "Store Credit", Desc = "Small chance to not destroy the trinket when buying from the shop. If the chance fails, drops several coins"},
+		--Your Soul
+		["173"] = {Name = "Your Soul", Desc = "Small chance to not destroy the trinket when taking a devil deal. If the chance fails, drops a black sack"},
+		--Judas' Tongue
+		["56"] = {Name = "Judas' Tongue", Desc = "Chance to spawn a black heart when taking a devil deal"},		
+	
+		--Mini Update
+		--Extension Cord
+		["125"] = {Name = "Extension Cord", Desc = "Most of your familiars' tears will be Tech Zero electrical tears, with a small chance to gain a Jacob's Ladder effect"},	
+		--Baby-Bender
+		["127"] = {Name = "Baby-Bender", Desc = "Familiars have more range and better homing"},
+
+		--Worms Update
+		--Pulse Worm
+		["9"] = {Name = "Pulse Worm", Desc = "Damage up"},
+		--Ring Worm
+		["11"] = {Name = "Ring Worm", Desc = "Tears up"},
+		--Ouroboros Worm
+		["96"] = {Name = "Ouroboros Worm", Desc = "Tears and luck up"},
+		--Rainbow Worm
+		["64"] = {Name = "Rainbow Worm", Desc = "Tears up"},
+		--Mom's Toenail
+		["16"] = {Name = "Mom's Toenail", Desc = "More frequent stomping, and some stomps target and slow enemies"},
+		--Callus
+		["14"] = {Name = "Callus", Desc = "Speed up"},
+		--The Left Hand 
+		["61"] = {Name = "The Left Hand ", Desc = "Opening red chests has a chance to spawn black hearts"},
+		--Pinky Eye
+		["30"] = {Name = "Pinky Eye", Desc = "Luck up, meaning better poison chance"},
+		
+		--Update
+		--Strange Key
+		["175"] = {Name = "Strange Key", Desc = "Gives a chance to replace any non-quest item pedestal with Pandoras Box"},
+		--Flat Worm
+		["12"] = {Name = "Flat Worm", Desc = "Damage up"},	
+	}	
+	
+	--Check to see if the EID description should be displayed
+	local function TrinketStackingPlusCondition(descObj)
+		for key, item in pairs(trinketInfo) do
+			currID = tonumber(key)
+			if descObj.ObjSubType == currID or descObj.ObjSubType == currID  + 32768 and (descObj.ObjType == 5 and descObj.ObjVariant == PickupVariant.PICKUP_TRINKET) then
+				--Gold trinket Check
+				if descObj.ObjSubType == currID  + 32768  then
+					return true
+				end		
+				--Check to see if the player has Moms Box or multiple stacks of the trinket
+				for i = 1, game:GetNumPlayers() do
+					player = game:GetPlayer(i)
+					--Check to see if player has multiple stacks of the trinket
+					if player:GetTrinketMultiplier(currID) >= 1 then
+						return true
+					end
+					--Check to see if player has Mom's Box
+					if player:HasCollectible(CollectibleType.COLLECTIBLE_MOMS_BOX) then
+						return true
+					end
+				end	
+			end
+		end
+		return false
+	end
+	
+	--Append the trinket's custom description 
+	local function TrinketStackingPlusCallback(descObj)
+		EID:appendToDescription(descObj, "#{{Collectible439}} Stacking+: ")
+		trinketID = descObj.ObjSubType
+		if descObj.ObjSubType > 32768 then
+			trinketID = descObj.ObjSubType - 32768
+		end
+		trinketID = tostring(trinketID)
+		stackingDesc = trinketInfo[trinketID].Desc
+		EID:appendToDescription(descObj, stackingDesc)
+
+		return descObj
+	end
+	
+	EID:addDescriptionModifier("TrinketStackingPlus", TrinketStackingPlusCondition, TrinketStackingPlusCallback)	
+	
+end	
+
+--[[
+if EID then
+	local trinketInfo = {
+		--Locust of War
+		{Id = 113, Desc = "Adds a chance to spawn extra locusts"},
+		--Locust of Pestilence
+		{Id = 114, Desc = "Adds a chance to spawn extra locusts"},
+		--Locust of Famine
+		{Id = 115, Desc = "Adds a chance to spawn extra locusts"},
+		--Locust of Death
+		{Id = 116, Desc = "Adds a chance to spawn extra locusts"},
+		--Locust of Conquest
+		{Id = 117, Desc = "Adds a chance to spawn extra locusts"},
+		--Filigree Feather
+		{Id = 123, Desc = "Angel statue bosses also drop soul hearts"},
+		--Wicked Crown
+		{Id = 161, Desc = "Extra chests spawn at the start of the Dark Room floor"},
+		--Holy Crown
+		{Id = 155, Desc = "Extra chests spawn at the start of The Chest floor"},
+		--Bloody Crown
+		{Id = 111, Desc = "Mom's Heart drops a boss item when killed"},
+		--Silver Dollar
+		{Id = 110, Desc = "Mom's Heart drops a buyable shop item when killed"},		
+		--Wooden Cross
+		{Id = 121, Desc = "Chance to replenish shield on room clear"},	
+		--???'s Soul
+		{Id = 57, Desc = "Extra copy of the familiar"},	
+		--Isaac's Head
+		{Id = 54, Desc = "Extra copy of the familiar"},	
+		--Vibrant Bulb
+		{Id = 100, Desc = "Extra stat boosts when fully charged"},			
+		--Dim Bulb
+		{Id = 101, Desc = "Extra stat boosts when partially charged and NOT fully charged"},
+		--Apple of Sodom
+		{Id = 140, Desc = "Chance to spawn extra spiders on heart pickup"},	
+		--Fish Tail
+		{Id = 94, Desc = "Chance to generate extra flies/spiders"},	
+		--AAA Battery
+		{Id = 3, Desc = "Chance to spawn a micro battery on room clear"},			
+		--Fragmented Card
+		{Id = 102, Desc = "Chance to spawn extra sacks when entering a secret room"},
+		--Stem Cell
+		{Id = 119, Desc = "Spawn red hearts in the starting room of each floor"},	
+		--Myosotis
+		{Id = 137, Desc = "Chance to duplicate the carried over pickups"},	
+		--Rotten Penny
+		{Id = 126, Desc = "Chance to spawn extra flies on coin pickup"},	
+		
+		--Content Update 1
+		
+		--Pay To Win
+		{Id = 112, Desc = "Restock boxes appear in Blue Womb treasure rooms, and Chest/Dark Room starting room"},			
+		--Store Key
+		{Id = 83, Desc = "Gives a damage up for each shop you enter while holding the store key"},
+		--Safety Scissors
+		{Id = 63, Desc = "Chance to resist explosive damage"},	
+		--Hairpin
+		{Id = 120, Desc = "Killing the boss room boss drops a battery"},	
+		
+		--Content Update 2
+		
+		--Equality
+		{Id = 103, Desc = "Picking up a consumable gives a chance to spawn the consumable type that Isaac has the least of"},	
+		--Crow Heart
+		{Id = 107, Desc = "Change to convert incoming damage into \"fake\" damage like dull razor"},	
+		--Store Credit
+		{Id = 13, Desc = "Small chance to not destroy the trinket when buying from the shop. If the chance fails, drops several coins"},	
+		--Your Soul
+		{Id = 173, Desc = "Small chance to not destroy the trinket when taking a devil deal. If the chance fails, drops a black sack"},	
+		--Judas' Tongue
+		{Id = 56, Desc = "Chance to spawn a black heart when taking a devil deal"},			
+	
+		--Mini Update
+		--Extension Cord
+		{Id = 125, Desc = "Most of your familiars' tears will be Tech Zero electrical tears, with a small chance to gain a Jacob's Ladder effect"},		
+		--Baby-Bender
+		{Id = 127, Desc = "Familiars have more range and better homing"},
+
+		--Worms Update
+		--Pulse Worm
+		{Id = 9, Desc = "Damage up"},
+		--Ring Worm
+		{Id = 11, Desc = "Tears up"},
+		--Ouroboros Worm
+		{Id = 96, Desc = "Tears and luck up"},
+		--Rainbow Worm
+		{Id = 64, Desc = "Tears up"},
+		--Mom's Toenail
+		{Id = 16, Desc = "More frequent stomping, and some stomps target and slow enemies"},
+		--Callus
+		{Id = 14, Desc = "Speed up"},
+		--The Left Hand 
+		{Id = 61, Desc = "Opening red chests has a chance to spawn black hearts"},
+		--The Pinky Eye
+		{Id = 30, Desc = "Luck up, meaning better poison chance"},
+		
+		--Update
+		--Strange Key
+		{Id = 175, Desc = "Gives a chance to replace any non-quest item pedestal with Pandoras Box"},
+		--Flat Worm
+		{Id = 12, Desc = "Damage up"},	
+	}		
 	changedEID = true
 	local currStr = ""
 	local currID = 0
@@ -1351,6 +1642,12 @@ if EID and not changedEID then
 		{Id = 61, Desc = "Opening red chests has a chance to spawn black hearts"},
 		--The Pinky Eye
 		{Id = 30, Desc = "Luck up, meaning better poison chance"},
+		
+		--Update
+		--Strange Key
+		{Id = 175, Desc = "Gives a chance to replace any non-quest item pedestal with Pandoras Box"},
+		--Flat Worm
+		{Id = 12, Desc = "Damage up"},	
 	}
 
 	for key, item in pairs(trinketInfo) do
@@ -1359,6 +1656,8 @@ if EID and not changedEID then
 		EID:addTrinket(currID, currStr)
 	end
 end
+]]--
+
 
 
 
