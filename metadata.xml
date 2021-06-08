@@ -17,7 +17,7 @@ Mini update
 -Worms Update! 8 new effects: Pulse Worm, Ouroboros Worm, Rainbow Worm, Ring Worm, Mom's toenail, Callus, Left Hand, and Pinky Eye. 
 
 [h1] All Current Trinket Effects [/h1][list]
-[*]Locust of Conquest/Death/ Famine/Pestilence/War - Chance to spawn extra locusts
+[*]Locust of Conquest/Death/Famine/Pestilence/War - Chance to spawn extra locusts
 [*]Filigree Feather -Angel statues drop soul hearts
 [*]Wicked Crown- Spawn extra chests in the dark room
 [*]Holy Crown-Spawn extra chests in the chest
@@ -64,7 +64,7 @@ Now includes better EID support! The description for the trinket's stacking effe
 -Worms update: 8 effects- Pulse Worm, Ouroboros Worm, Rainbow Worm, Ring Worm, Mom's toenail, Callus, Left Hand, and Pinky Eye 
 -Past updates: 11 new effects + basic EID support
 </description>
-    <version>1.7</version>
+    <version>1.8</version>
     <visibility>Public</visibility>
     <tag id="Items"/>
     <tag id="Trinkets"/>
