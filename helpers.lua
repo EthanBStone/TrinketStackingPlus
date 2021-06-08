@@ -51,5 +51,42 @@ function Helpers:getLowestConsumable()
 	end	
 end
 
+function Helpers:getTearBoost(tearBoost, currTears, maxTears) 
+	if (currTears - tearBoost) > maxTears then
+		return tearBoost
+	elseif currTears > 5 then
+		return math.min(currTears - maxTears, tearBoost )
+	else
+		return 0
+	end
+end
+
+--Code for Isaac's Head and ???'s Soul
+function Helpers:updateTrinketFamiliars()
+	famCount = 2 --Amount of familiars in the following tables. ???'s soul + isaac's head = 2
+	familiarTrinket = {TrinketType.TRINKET_SOUL, TrinketType.TRINKET_ISAACS_HEAD}
+	familiarVariants = {FamiliarVariant.BLUE_BABY_SOUL, FamiliarVariant.ISAACS_HEAD}
+	for pNum = 1, game:GetNumPlayers() do
+		player = game:GetPlayer(pNum)
+		for i = 1, famCount do 
+			if player:GetTrinketMultiplier(familiarTrinket[i]) > 1 then
+				--Remove all extra spawns of the familiars
+				for i, ent in pairs(Isaac.FindByType(EntityType.ENTITY_FAMILIAR, familiarVariants[i], 0, 0)) do
+					if ent:GetData().StackedSpawn == pNum then
+						ent:Remove()
+					end
+				end
+				for j = 1, (player:GetTrinketMultiplier(familiarTrinket[i]) - 1) do
+					rng = player:GetTrinketRNG(familiarTrinket[i])
+					rngRoll = rng:RandomInt(100)			
+					local spawnedFamiliar = Isaac.Spawn(EntityType.ENTITY_FAMILIAR, familiarVariants[i], 0, player.Position + Vector(-5 + rng:RandomInt(10),-5 + rng:RandomInt(10)) , Vector(-20 + rng:RandomInt(40),-20 + rng:RandomInt(40)), player )
+					spawnedFamiliar:GetData().StackedSpawn = pNum				
+				end
+			end		
+		end
+	end	
+end
+
+
 
 return Helpers

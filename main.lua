@@ -144,6 +144,8 @@ local cacheUpdateTrinkets = {
 	["Callus"] = {id = 14, cache = {CacheFlag.CACHE_SPEED}, playerFlags = {0,0,0,0,0,0,0,0}}, 
 	["Pinky Eye"] = {id = 30, cache = {CacheFlag.CACHE_LUCK}, playerFlags = {0,0,0,0,0,0,0,0}}, 
 	["Flat Worm"] = {id = 12, cache = {CacheFlag.CACHE_DAMAGE}, playerFlags = {0,0,0,0,0,0,0,0}}, 
+	["Isaac's Head"] = {id = 54, cache = {CacheFlag.CACHE_FAMILIARS}, playerFlags = {0,0,0,0,0,0,0,0}}, 
+	["???'s Soul"] = {id = 57, cache = {CacheFlag.CACHE_FAMILIARS}, playerFlags = {0,0,0,0,0,0,0,0}}, 
 }
 
 function TrinketStacking:onUpdate()	
@@ -332,6 +334,7 @@ function TrinketStacking:onUpdate()
 			player:AddCacheFlags(CacheFlag.CACHE_TEARFLAG)	
 			player:AddCacheFlags(CacheFlag.CACHE_SPEED)	
 			player:AddCacheFlags(CacheFlag.CACHE_LUCK)
+			player:AddCacheFlags(CacheFlag.CACHE_FAMILIARS)
 			player:EvaluateItems()					
 			
 		end	
@@ -396,7 +399,7 @@ function TrinketStacking:onRender()
 
 end
 
---On new room entered: Locusts, familiars
+--On new room entered: Locusts
 function TrinketStacking:onNewRoom() 
 	hairpinTriggered = 0
 	level = game:GetLevel()
@@ -427,35 +430,15 @@ function TrinketStacking:onNewRoom()
 		end
 	end
 	
-	--Code for ???'s Soul and Isaac's Head
-	famCount = 2 --Amount of familiars in the following tables. ???'s soul + isaac's head = 2
-	familiarTrinket = {TrinketType.TRINKET_SOUL, TrinketType.TRINKET_ISAACS_HEAD}
-	familiarVariants = {FamiliarVariant.BLUE_BABY_SOUL, FamiliarVariant.ISAACS_HEAD}
-	for pNum = 1, game:GetNumPlayers() do
-		player = game:GetPlayer(pNum)
-		for i = 1, famCount do 
-			if player:GetTrinketMultiplier(familiarTrinket[i]) > 1 then
-				--Remove all extra spawns of the familiars
-				for i, ent in pairs(Isaac.FindByType(EntityType.ENTITY_FAMILIAR, familiarVariants[i], 0, 0)) do
-					if ent:GetData().StackedSpawn == 1 then
-						--print("Killing old familiar")
-						ent:Die()
-					end
-				end
-				for j = 1, (player:GetTrinketMultiplier(familiarTrinket[i]) - 1) do
-					rng = player:GetTrinketRNG(familiarTrinket[i])
-					rngRoll = rng:RandomInt(100)			
-					local spawnedFamiliar = Isaac.Spawn(EntityType.ENTITY_FAMILIAR, familiarVariants[i], 0, player.Position + Vector(-5 + rng:RandomInt(10),-5 + rng:RandomInt(10)) , Vector(-20 + rng:RandomInt(40),-20 + rng:RandomInt(40)), player )
-					spawnedFamiliar:GetData().StackedSpawn = 1
-					--print("Spawning new familiar")				
-				end
-			end		
+	for _, bSoul in pairs(Isaac.FindByType(EntityType.ENTITY_FAMILIAR, FamiliarVariant.BLUE_BABY_SOUL) ) do
+		if bSoul:GetData().StackedSpawn ~= nil  then
+			rng = game:GetPlayer(0):GetTrinketRNG(TrinketType.TRINKET_SOUL)
+			bSoul.Position = bSoul.Position + Vector(rng:RandomInt(30),rng:RandomInt(30))
 		end
-	end	
-
 	
-	
+	end
 end
+
 
 --On hostile room start, for locusts
 function TrinketStacking:onHostileRoomStart()
@@ -616,26 +599,6 @@ function TrinketStacking:onMomsHeartKill(ent)
 
 	end	
 end
---[[
---Function to spawn item from a certain pool w/ a certain price
-function TrinketStacking:spawnItemFromPool(pool, pos, price, seed)
-	local spawnItem = Isaac.Spawn(
-		EntityType.ENTITY_PICKUP, 
-		PickupVariant.PICKUP_COLLECTIBLE, 
-		game:GetItemPool():GetCollectible(pool, true, seed), 
-		pos, 
-		Vector(0,0), 
-		nil)
-	spawnItem = spawnItem:ToPickup()
-	if(price ~= 0 and price ~= nil) then 
-		spawnItem.AutoUpdatePrice = false
-		spawnItem.Price = price 
-	end
-	
-	return spawnItem
-	--spawnItem = i
-end
-]]--
 
 --Additional multipliers for the bulb trinkets will grant you an addition of these stats
 local VibrantBulbBoosts =  {
@@ -648,6 +611,7 @@ local DimBulbBoosts =  {
 	DMG = 0.75,
 	LUCK = 1
 }
+local MAX_TEARS = 5
 function TrinketStacking:onCacheEval(player, cacheFlag)
 	if player:GetData().pNum ~= nil then
 		local hasChargedActive = 0
@@ -711,20 +675,22 @@ function TrinketStacking:onCacheEval(player, cacheFlag)
 		if cacheFlag == CacheFlag.CACHE_FIREDELAY then
 			--Apply Ring Worm
 			if cacheUpdateTrinkets["Ring Worm"].playerFlags[pNum] >= 2 then
-				player.MaxFireDelay = player.MaxFireDelay  - 1 - (1.5 * (player:GetTrinketMultiplier(TrinketType.TRINKET_RING_WORM) - 1))
+				ringWormBoost = Helpers:getTearBoost(1 + (1.5 * (player:GetTrinketMultiplier(TrinketType.TRINKET_RING_WORM) - 1) ), player.MaxFireDelay, MAX_TEARS)
+				player.MaxFireDelay = player.MaxFireDelay - ringWormBoost
 			
 			end	
 			--Apply Ouroboros Worm
 			if cacheUpdateTrinkets["Ouroboros Worm"].playerFlags[pNum] >= 2 then
-				player.MaxFireDelay = player.MaxFireDelay  - 1 - (1.5 * (player:GetTrinketMultiplier(TrinketType.TRINKET_OUROBOROS_WORM) - 1))
+				oWormBoost = Helpers:getTearBoost(1 + (1.5 * (player:GetTrinketMultiplier(TrinketType.TRINKET_OUROBOROS_WORM) - 1)), player.MaxFireDelay, MAX_TEARS)
+				player.MaxFireDelay = player.MaxFireDelay - oWormBoost
 			
 			end	
 			--Apply Rainbow worm
 			if cacheUpdateTrinkets["Rainbow Worm"].playerFlags[pNum] >= 2 then
-				player.MaxFireDelay = player.MaxFireDelay  - 1 - (1.5 * (player:GetTrinketMultiplier(TrinketType.TRINKET_RAINBOW_WORM) - 1))
+				rWormBoost = Helpers:getTearBoost(1 + (1.5 * (player:GetTrinketMultiplier(TrinketType.TRINKET_RAINBOW_WORM) - 1)), player.MaxFireDelay, MAX_TEARS)
+				player.MaxFireDelay = player.MaxFireDelay - rWormBoost
 			
 			end	
-			player.MaxFireDelay = player.MaxFireDelay 
 		end
 		if cacheFlag == CacheFlag.CACHE_SPEED then
 			if cacheUpdateTrinkets["Callus"].playerFlags[pNum] >= 2 then
@@ -743,10 +709,16 @@ function TrinketStacking:onCacheEval(player, cacheFlag)
 			end				
 			player.Luck = player.Luck + bulbBoosts.LUCK
 		end	
+		--Update trinket familiars
+		if cacheFlag == CacheFlag.CACHE_FAMILIARS then
+			Helpers.updateTrinketFamiliars()
+		end
 	end
 	
 
 end
+
+
 
 function TrinketStacking:onPlayerUpdate(player) 
 
