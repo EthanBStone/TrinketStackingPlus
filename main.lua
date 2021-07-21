@@ -135,6 +135,7 @@ local myosotisFlag = 0
 --Makes sure hairpin only triggers once per boss room
 local hairpinTriggered = 0
 
+--Trinkets that cause cache updates
 local cacheUpdateTrinkets = {
 	["Store Key"] = {id = 83, cache = {CacheFlag.CACHE_DAMAGE}, playerFlags = {0,0,0,0,0,0,0,0}}, 
 	["Pulse Worm"] = {id = 9, cache = {CacheFlag.CACHE_DAMAGE}, playerFlags = {0,0,0,0,0,0,0,0}}, 
@@ -388,6 +389,8 @@ function TrinketStacking:onUpdate()
 
 		end
 	end
+	
+
 end
 
 
@@ -719,10 +722,21 @@ function TrinketStacking:onCacheEval(player, cacheFlag)
 end
 
 
-
 function TrinketStacking:onPlayerUpdate(player) 
 
+	data = player:GetData()
 
+	--The "gassy" effect caused by butt penny, stores farts for the player
+	if data.BP_Gassy ~= nil and data.BP_Gassy.Time > 0 then
+		local currFrame = game:GetFrameCount()
+		--Conditions for a fart to trigger
+		if currFrame % 30 == 1 and currFrame ~= data.BP_Gassy.LastFrame then
+			game:Fart(player.Position, 85, player, 1, 3)
+			data.BP_Gassy.Time = data.BP_Gassy.Time - 1
+			data.BP_Gassy.LastFrame = currFrame
+			--print("gassy fart: " .. data.BP_Gassy.Time .. " farts left. Frame: " .. currFrame)
+		end	
+	end
 end
 
 --Chance to add addition flies/spiders with Fish Tail
@@ -821,6 +835,39 @@ function TrinketStacking:onPlayerHurt(player, dmg, flags, dmgSource, cdFrames)
 			end
 		end	
 	end
+
+	--Bag lunch code
+	if player:GetTrinketMultiplier(TrinketType.TRINKET_BAG_LUNCH) > 1 then
+		rng = player:GetTrinketRNG(TrinketType.TRINKET_BAG_LUNCH)
+		rngRoll = rng:RandomInt(100)
+		rngChance = 2 * (player:GetTrinketMultiplier(TrinketType.TRINKET_BAG_LUNCH) - 1 )
+		
+		--print("Bag lunch roll: " .. rngRoll .. "|" .. rngChance)
+		if rngRoll <= rngChance then
+			Isaac.Spawn(EntityType.ENTITY_PICKUP, PickupVariant.PICKUP_COLLECTIBLE, CollectibleType.COLLECTIBLE_LUNCH, player.Position, Vector(0,0), nil)
+			--print("Baglunch payout")
+		end
+	end
+
+	--Wish bone code
+	if player:GetTrinketMultiplier(TrinketType.TRINKET_WISH_BONE) > 1 then
+		rng = player:GetTrinketRNG(TrinketType.TRINKET_WISH_BONE)
+		rngRoll = rng:RandomInt(100)
+		rngChance = 2 * (player:GetTrinketMultiplier(TrinketType.TRINKET_WISH_BONE) - 1 )
+		
+		--print("Wishbone roll: " .. rngRoll .. "|" .. rngChance)
+		if rngRoll <= rngChance then
+			--print("Wishbone payout")
+			local seed = game:GetSeeds():GetStartSeed()
+			local roomType = game:GetRoom():GetType()
+			
+			pool = game:GetItemPool()
+			poolType = pool:GetPoolForRoom(roomType, seed)
+			--print("room = " .. roomType .. " pool = " .. poolType)
+			Helpers:spawnItemFromPool( poolType, player.Position, 0, seed)
+			
+		end
+	end
 end
 
 --Store key code
@@ -859,9 +906,9 @@ function TrinketStacking:onNPCDeath(enemy)
 	end
 end
 
---On Coin pickup, for rotten penny
+--On Coin pickup, for rotten penny, butt penny, cursed penny
 function TrinketStacking:onCoinPickup(pickup, ent, bool)
-	if ent.Type == EntityType.ENTITY_PLAYER then
+	if ent.Type == EntityType.ENTITY_PLAYER and pickup.SubType ~= CoinSubType.COIN_STICKYNICKEL then
 		player = ent:ToPlayer()
 		--Rotten Penny code
 		if player:GetTrinketMultiplier(TrinketType.TRINKET_ROTTEN_PENNY) > 1 then
@@ -873,6 +920,61 @@ function TrinketStacking:onCoinPickup(pickup, ent, bool)
 				player:AddBlueFlies(1, player.Position, player )
 			end		
 		end	
+	
+		--Add gassy stacks with butt penny
+		if player:GetTrinketMultiplier(TrinketType.TRINKET_BUTT_PENNY) > 1 then
+			data = ent:GetData()
+			if data.BP_Gassy == nil or data.BP_Gassy.Time < 0 then
+				data.BP_Gassy = { Time = 0, LastFrame = 0 }
+			end
+			
+			--The value of Gassy.Time is how many farts the player will do 
+			--A better value coin will give more farts
+			local coinMult = 1
+			
+			if pickup.SubType == CoinSubType.COIN_DOUBLEPACK or pickup.SubType == CoinSubType.COIN_LUCKYPENNY or pickup.SubType == CoinSubType.COIN_NICKEL then
+				coinMult = 2
+				
+			elseif pickup.SubType == CoinSubType.COIN_DIME then
+				coinMult = 3
+			end
+			data.BP_Gassy.Time = data.BP_Gassy.Time + ( coinMult * (3 * player:GetTrinketMultiplier(TrinketType.TRINKET_BUTT_PENNY) ) )
+			--The max cap of farts the player can store with butt penny
+			if data.BP_Gassy.Time > 20 then
+				data.BP_Gassy.Time = 20
+			end
+		end
+	
+		--Cursed penny code
+		if player:GetTrinketMultiplier(TrinketType.TRINKET_CURSED_PENNY) > 1 then
+			rng = player:GetTrinketRNG(TrinketType.TRINKET_CURSED_PENNY)
+			rngRoll = rng:RandomInt(100)	
+			--A better value coin will give a flat better chance to create an item
+			local coinMult = 0
+			if pickup.SubType == CoinSubType.COIN_DOUBLEPACK or pickup.SubType == CoinSubType.COIN_LUCKYPENNY or pickup.SubType == CoinSubType.COIN_NICKEL then
+				coinMult = 2	
+			elseif pickup.SubType == CoinSubType.COIN_DIME then
+				coinMult = 4
+			end
+			rngChance = coinMult + ( 4 + (2 * player:GetTrinketMultiplier(TrinketType.TRINKET_CURSED_PENNY) - 1) )
+			--print("Cursed penny roll: " .. rngRoll .. "|" .. rngChance) 
+			if rngRoll <= rngChance then
+				--print("Keeper box used")
+				player:UseActiveItem(CollectibleType.COLLECTIBLE_KEEPERS_BOX, UseFlag.USE_MIMIC)
+			end
+		end
+	
+		--Counterfeit penny code
+		if player:GetTrinketMultiplier(TrinketType.TRINKET_COUNTERFEIT_PENNY) > 1 then	
+			rng = player:GetTrinketRNG(TrinketType.TRINKET_COUNTERFEIT_PENNY)
+			rngRoll = rng:RandomInt(100)	
+			rngChance = 5 + (15 * (player:GetTrinketMultiplier(TrinketType.TRINKET_COUNTERFEIT_PENNY) - 1) ) 
+			--print("Counterfeit penny roll: " .. rngRoll .. "|" .. rngChance) 
+			if rngRoll <= rngChance then
+				--print("Counter penny proc")
+				player:AddCoins(1)
+			end			
+		end		
 	end
 end
 
@@ -907,34 +1009,9 @@ function TrinketStacking:onHeartPickup(pickup, ent, bool)
 	end		
 end
 
---Helper function for equality
---[[
-function TrinketStacking:getLowestConsumable()
-	player = game:GetPlayer(1)
-	local consumables = {
-		{variant = PickupVariant.PICKUP_BOMB,count = player:GetNumBombs()},
-		{variant = PickupVariant.PICKUP_KEY, count = player:GetNumKeys()},
-		{variant = PickupVariant.PICKUP_COIN,count = player:GetNumCoins()},
-	}
-	
-	local minConsumable = consumables[1]
-	if consumables[1].count == consumables[2].count and consumables[1].count == consumables[3].count then
-		--print("All Equal")
-		return nil
-	else
-		for i, pickup in pairs(consumables) do
-			if pickup.count < minConsumable.count then
-				minConsumable = pickup 
-			end
-		end	
-		--print("Lowest consumable: " .. minConsumable.variant)
-		return minConsumable.variant
-	end	
-end
-]]--
 --Only for equality
 function TrinketStacking:onEqualityPickup(pickup, ent, bool)
-	if ent.Type == EntityType.ENTITY_PLAYER then
+	if ent.Type == EntityType.ENTITY_PLAYER and pickup.SubType ~= CoinSubType.COIN_STICKYNICKEL then
 		player = ent:ToPlayer()
 		if player:GetTrinketMultiplier(TrinketType.TRINKET_EQUALITY) > 1 then
 			dropVariant = Helpers:getLowestConsumable()
@@ -1200,6 +1277,10 @@ function TrinketStacking:onStrangeKeyCheck(pickup)
 		end		
 	end
 end
+
+
+
+
 
 TrinketStacking:AddCallback(ModCallbacks.MC_POST_UPDATE, TrinketStacking.onUpdate)
 TrinketStacking:AddCallback(ModCallbacks.MC_POST_RENDER, TrinketStacking.onRender)

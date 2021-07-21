@@ -65,7 +65,7 @@ if EID then
 		--Equality
 		["103"] = {Name = "Equality", Desc = "Picking up a consumable gives a chance to spawn the consumable type that Isaac has the least of"},	
 		--Crow Heart
-		["107"] = {Name = "Crow Heart", Desc = "Change to convert incoming damage into \"fake\" damage like dull razor"},	
+		["107"] = {Name = "Crow Heart", Desc = "Chance to convert incoming damage into \"fake\" damage like dull razor"},	
 		--Store Credit
 		["13"] = {Name = "Store Credit", Desc = "Small chance to not destroy the trinket when buying from the shop. If the chance fails, drops several coins"},
 		--Your Soul
@@ -102,6 +102,15 @@ if EID then
 		["175"] = {Name = "Strange Key", Desc = "Gives a chance to replace any non-quest item pedestal with Pandoras Box"},
 		--Flat Worm
 		["12"] = {Name = "Flat Worm", Desc = "Damage up"},	
+		
+		--July Update
+		--Butt Penny
+		["24"] = {Name = "Butt Penny", Desc = "Make isaac gassy when picking up coins, causing him to fart frequently for a few seconds"},
+		["172"] = {Name = "Cursed Penny", Desc = "When picking up a coin, there is a small chance to spawn a buyable shop item"},
+		["105"] = {Name = "Bag Lunch", Desc = "When taking damage, there’s an extra chance to spawn Lunch without destroying the trinket"},
+		["104"] = {Name = "Wish Bone", Desc = "When taking damage, there’s an extra chance to spawn an item without destroying the trinket"},
+		["52"] = {Name = "Counterfeit Penny", Desc = "Chance to earn an additional penny for each coin picked up"},
+		
 	}	
 	
 	--Check to see if the EID description should be displayed

@@ -10,11 +10,7 @@ Mom's Box and Golden Trinket's trinket modifying abilities are a really cool mec
 Trinket Stacking + adds new trinket stacking effects to 43 trinkets that previously lacked them. I designed these effects to be more powerful with the more trinket multiplier you have, so having Mom's Box + the Gold version of a trinket will be even more powerful!
 
 [h1]Latest Updates[/h1]
-Mini update
--Better EID support! The description for the trinket's stacking effect will only display if you are carrying mom's box, if you are viewing a golden trinket, or if you are already carrying/have gulped the trinket
--2 new trinket effects: Strange Key and Flat Worm
-
--Worms Update! 8 new effects: Pulse Worm, Ouroboros Worm, Rainbow Worm, Ring Worm, Mom's toenail, Callus, Left Hand, and Pinky Eye. 
+July update! 5 new trinket effects: Butt penny, cursed penny, bag lunch, wish bone, counterfeit penny. Check out their effects below!
 
 [h1] All Current Trinket Effects [/h1][list]
 [*]Locust of Conquest/Death/Famine/Pestilence/War - Chance to spawn extra locusts
@@ -56,15 +52,21 @@ Mini update
 [*]Pinky Eye - Luck up
 [*]Strange Key - Gives a chance to replace any non quest item pedestal with pandoras box
 [*]Flat Worm - Damage up
+[*]Butt Penny- Make isaac “gassy” when picking up coins, causing him to fart frequently for a few seconds
+[*]Cursed Penny - when picking up a coin, there is a small chance to spawn a buyable shop item 
+[*]Bag Lunch - When taking damage, there’s an extra chance to spawn Lunch without destroying the trinket
+[*] WishBone - When taking damage, there’s an extra chance to spawn an item without destroying the trinket
+[*]Counterfeit Penny - Chance to earn an additional penny for each coin picked up
 [/list]
 [h1]External Item Descriptions[/h1]
 Now includes better EID support! The description for the trinket's stacking effect will only display if you are carrying mom's box, if you are viewing a golden trinket, or if you are already carrying/have gulped the trinket
 [h1]Updates:[/h1]
+-July update: 5 new trinket effects
 -Mini Update: Better EID support and 2 new effects: flat worm and strange key
 -Worms update: 8 effects- Pulse Worm, Ouroboros Worm, Rainbow Worm, Ring Worm, Mom's toenail, Callus, Left Hand, and Pinky Eye 
 -Past updates: 11 new effects + basic EID support
 </description>
-    <version>1.10</version>
+    <version>1.11</version>
     <visibility>Public</visibility>
     <tag id="Items"/>
     <tag id="Trinkets"/>
