@@ -104,12 +104,19 @@ if EID then
 		["12"] = {Name = "Flat Worm", Desc = "Damage up"},	
 		
 		--July Update
-		--Butt Penny
 		["24"] = {Name = "Butt Penny", Desc = "Make isaac gassy when picking up coins, causing him to fart frequently for a few seconds"},
 		["172"] = {Name = "Cursed Penny", Desc = "When picking up a coin, there is a small chance to spawn a buyable shop item"},
 		["105"] = {Name = "Bag Lunch", Desc = "When taking damage, there’s an extra chance to spawn Lunch without destroying the trinket"},
 		["104"] = {Name = "Wish Bone", Desc = "When taking damage, there’s an extra chance to spawn an item without destroying the trinket"},
 		["52"] = {Name = "Counterfeit Penny", Desc = "Chance to earn an additional penny for each coin picked up"},
+		
+		--7 23 update
+		["177"] = {Name = "Temporary Tattoo", Desc = "Spawns extra sacks when finishing challenge rooms"},
+		["67"] = {Name = "Cracked Dice", Desc = "Chance to spawn a dice shard when damaged"},
+		["150"] = {Name = "Blue Key", Desc = "Chance to spawn an extra room clear reward on Blue Key rooms"},
+		["23"] = {Name = "Missing Poster", Desc = "Sacrifice room has a chance to spawn additional pickups when stepping on the spikes"},
+		["4"] = {Name = "Broken Remote", Desc = "Chance to do Teleport 2.0 effect instead of the normal Teleport effect when using an active item"},
+		
 		
 	}	
 	

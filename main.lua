@@ -104,6 +104,7 @@ Extension cord laser: Subtype 2
 *Store key, vibrant/dim bulbs damage is not affected by dmg multipliers like soy milk or polyphemus
 *Crow Heart doesnt give iframes
 
+*Cracked dice's dice shard drop will be rerolled if you get the d20 effect
 *Need to fix cache checking when you already have 1 of the trinket. intead of making playerflag a bool, make it be the trinket multiplier the player has, so if it gets reduced or increased we can call a cache check
 ]]--
 
@@ -779,10 +780,35 @@ function TrinketStacking:onRoomClear(rng, pos)
 			local rngRoll = rng:RandomInt(100)
 			local crossChance = 5 + (player:GetTrinketMultiplier(TrinketType.TRINKET_WOODEN_CROSS) - 1) * 10
 			--print("WoodenCross Roll: " .. rngRoll .. "|" .. crossChance )
-			if rngRoll < crossChance then
+			if rngRoll <= crossChance then
 				--print("WoodenCross Triggered!")
 				player:UseCard(Card.CARD_HOLY)
 			end
+		end
+		
+		
+		local curRoomType = game:GetRoom():GetType() 
+		--Code for Temporary Tattoo
+		if player:GetTrinketMultiplier(TrinketType.TRINKET_TEMPORARY_TATTOO) > 1 and curRoomType == RoomType.ROOM_CHALLENGE then
+			local rng = player:GetTrinketRNG(TrinketType.TRINKET_TEMPORARY_TATTOO)
+			for i = 1, (player:GetTrinketMultiplier(TrinketType.TRINKET_TEMPORARY_TATTOO) - 1) do
+				--print("Sack spawned")
+				--print("i=" .. i .. " mult=" .. player:GetTrinketMultiplier(TrinketType.TRINKET_TEMPORARY_TATTOO))
+				Isaac.Spawn(EntityType.ENTITY_PICKUP, PickupVariant.PICKUP_GRAB_BAG, 0, pos, Vector(-10 + rng:RandomInt(20),-10 + rng:RandomInt(20)), nil)			
+			end
+		end	
+
+		--Code for blue key
+		if player:GetTrinketMultiplier(TrinketType.TRINKET_BLUE_KEY) > 1 and curRoomType == 28 and game:GetRoom():GetRoomConfigStage() == 0 then
+			--print("Blue key room cleared")
+			local rng = player:GetTrinketRNG(TrinketType.TRINKET_BLUE_KEY)
+			local rngRoll = rng:RandomInt(100)
+			local rngChance = 25 * player:GetTrinketMultiplier(TrinketType.TRINKET_BLUE_KEY)
+			--print("Blue key Roll: " .. rngRoll .. "|" .. rngChance )
+			if rngRoll <= rngChance then
+				--print("Blue key drop Triggered!")
+				Isaac.Spawn(EntityType.ENTITY_PICKUP, 0, 0, pos, Vector(-2 + rng:RandomInt(4), -2 + rng:RandomInt(4)), nil)
+			end			
 		end
 	end
 	
@@ -806,7 +832,7 @@ function TrinketStacking:onSecretRoomEntered()
 	end
 end
 
---On player hurt, used for safety scissors and crow heart
+--On player hurt, used for safety scissors and crow heart, cracked dice, missing poster
 function TrinketStacking:onPlayerHurt(player, dmg, flags, dmgSource, cdFrames)
 	player = player:ToPlayer()
 	--Safety scissors code
@@ -868,6 +894,36 @@ function TrinketStacking:onPlayerHurt(player, dmg, flags, dmgSource, cdFrames)
 			
 		end
 	end
+
+	--Cracked dice code
+	if player:GetTrinketMultiplier(TrinketType.TRINKET_CRACKED_DICE) > 1 then
+		rng = player:GetTrinketRNG(TrinketType.TRINKET_CRACKED_DICE)
+		rngRoll = rng:RandomInt(100)
+		rngChance = 3 + (2 * (player:GetTrinketMultiplier(TrinketType.TRINKET_CRACKED_DICE) - 1 ) )
+		
+		--print("cracked dice roll: " .. rngRoll .. "|" .. rngChance)
+		if rngRoll <= rngChance then
+			Isaac.Spawn(EntityType.ENTITY_PICKUP, PickupVariant.PICKUP_TAROTCARD, Card.CARD_DICE_SHARD, player.Position, Vector(2,2), nil)
+			--print("Dice payout")
+		end
+	end
+
+	--Missing poster code
+	if player:GetTrinketMultiplier(TrinketType.TRINKET_MISSING_POSTER) > 1 then
+		if flags == (DamageFlag.DAMAGE_SPIKES + DamageFlag.DAMAGE_NO_PENALTIES) and dmgSource.Type == 0 and dmgSource.Variant == 0 and game:GetRoom():GetType() == RoomType.ROOM_SACRIFICE then
+			--print("Sac room dmg taken")
+			rng = player:GetTrinketRNG(TrinketType.TRINKET_MISSING_POSTER)
+			rngRoll = rng:RandomInt(100)
+			rngChance = 10 + 5 * (player:GetTrinketMultiplier(TrinketType.TRINKET_MISSING_POSTER) )
+			--print("m poster roll: " .. rngRoll .. "|" .. rngChance)
+			if rngRoll <= rngChance then
+				Isaac.Spawn(EntityType.ENTITY_PICKUP, 0, 0, player.Position, Vector(-2 + rng:RandomInt(4),-2 + rng:RandomInt(4) ), nil)
+				--print("M Poster payout")
+			end
+		end
+		
+	end
+	
 end
 
 --Store key code
@@ -1279,8 +1335,27 @@ function TrinketStacking:onStrangeKeyCheck(pickup)
 end
 
 
+function TrinketStacking.onTeleporter(item, tpRng, user, flags, slot, data)
+	--print("TELEPORTER USED")
+	for i = 1, game:GetNumPlayers() do
+		player = game:GetPlayer(i)
+		if player:GetTrinketMultiplier(TrinketType.TRINKET_BROKEN_REMOTE) > 1 then
+			--print("Detect broken remote")
+			rng = player:GetTrinketRNG(TrinketType.TRINKET_BROKEN_REMOTE)
+			rngRoll = rng:RandomInt(100)
+			rngChance = 10 + 25 * player:GetTrinketMultiplier(TrinketType.TRINKET_BROKEN_REMOTE)
+			--print("B remote roll: " .. rngRoll .. "|" .. rngChance)
+			if rngRoll <= rngChance then
+				player:UseActiveItem(CollectibleType.COLLECTIBLE_TELEPORT_2)
+				--print("B remote payout")
+			end			
+			return false			
+		end		
+	end
 
+end
 
+TrinketStacking:AddCallback(ModCallbacks.MC_USE_ITEM, TrinketStacking.onTeleporter, CollectibleType.COLLECTIBLE_TELEPORT)
 
 TrinketStacking:AddCallback(ModCallbacks.MC_POST_UPDATE, TrinketStacking.onUpdate)
 TrinketStacking:AddCallback(ModCallbacks.MC_POST_RENDER, TrinketStacking.onRender)

@@ -7,10 +7,12 @@
 
 Mom's Box and Golden Trinket's trinket modifying abilities are a really cool mechanic in the game, however they don't work with almost HALF of the trinkets in the game. There are over 80 trinkets that have no effect at all with Mom's Box, and having the Golden version does nothing either. That's where my mod comes in
 
-Trinket Stacking + adds new trinket stacking effects to 43 trinkets that previously lacked them. I designed these effects to be more powerful with the more trinket multiplier you have, so having Mom's Box + the Gold version of a trinket will be even more powerful!
+Trinket Stacking + adds new trinket stacking effects to 53 trinkets that previously lacked them. I designed these effects to be more powerful with the more trinket multiplier you have, so having Mom's Box + the Gold version of a trinket will be even more powerful!
 
 [h1]Latest Updates[/h1]
-July update! 5 new trinket effects: Butt penny, cursed penny, bag lunch, wish bone, counterfeit penny. Check out their effects below!
+7-23 Update! 5 new trinket effects: Temporary tattoo, cracked dice, blue key, missing poster, and broken remote. Check out their effects below
+
+July update 1! 5 new trinket effects: Butt penny, cursed penny, bag lunch, wish bone, counterfeit penny. Check out their effects below!
 
 [h1] All Current Trinket Effects [/h1][list]
 [*]Locust of Conquest/Death/Famine/Pestilence/War - Chance to spawn extra locusts
@@ -20,14 +22,14 @@ July update! 5 new trinket effects: Butt penny, cursed penny, bag lunch, wish bo
 [*]Bloody Crown-moms heart drops boss items
 [*]Silver Dollar-moms heart drops a buyable shop item
 [*]Wooden Cross - Chance regain shield on room clear
-[*]???'s Soul - Extra copy of the familiar 
+[*]???'s Soul - Extra copy of the familiar
 [*]Isaac's Head - Extra copy of the familiar
-[*]Vibrant Bulb - Extra boosts 
+[*]Vibrant Bulb - Extra boosts
 [*]Dim Bulb - Extra boosts that apply as long as the item isnt FULLY charged
 [*]Apple of Sodom - More spiders spawned
 [*]Fish Tail - Chance for extra flies/spiders spawned
 [*]AAA Battery - Chance to drop micro batteries on room clear
-[*]Fragmented Card - Normal Secret rooms have a chance to spawn a sack when entering 
+[*]Fragmented Card - Normal Secret rooms have a chance to spawn a sack when entering
 [*]Stem Cell - Drop full red heart on ground at start of floor for every multiplier
 [*]Myosotis - Chance to duplicate the carried over pickups
 [*]Rotten Penny - Chance for more flies on coin pickup
@@ -53,20 +55,26 @@ July update! 5 new trinket effects: Butt penny, cursed penny, bag lunch, wish bo
 [*]Strange Key - Gives a chance to replace any non quest item pedestal with pandoras box
 [*]Flat Worm - Damage up
 [*]Butt Penny- Make isaac “gassy” when picking up coins, causing him to fart frequently for a few seconds
-[*]Cursed Penny - when picking up a coin, there is a small chance to spawn a buyable shop item 
+[*]Cursed Penny - when picking up a coin, there is a small chance to spawn a buyable shop item
 [*]Bag Lunch - When taking damage, there’s an extra chance to spawn Lunch without destroying the trinket
 [*] WishBone - When taking damage, there’s an extra chance to spawn an item without destroying the trinket
 [*]Counterfeit Penny - Chance to earn an additional penny for each coin picked up
+[*]Temporary Tattoo - Spawns extra sacks when finishing challenge rooms
+[*]Cracked Dice - chance to drop a dice shard when damaged
+[*]Blue Key- Chance to spawn an extra room clear reward on Blue Key rooms
+[*]Missing Poster - Sacrifice room has a chance to drop additional pickups when stepping on the spikes
+[*]Broken Remote - Chance to do Teleport 2.0 effect instead of the normal Teleport effect when using an active item
 [/list]
 [h1]External Item Descriptions[/h1]
 Now includes better EID support! The description for the trinket's stacking effect will only display if you are carrying mom's box, if you are viewing a golden trinket, or if you are already carrying/have gulped the trinket
 [h1]Updates:[/h1]
+-7-23 update: 5 new trinket effects
 -July update: 5 new trinket effects
 -Mini Update: Better EID support and 2 new effects: flat worm and strange key
--Worms update: 8 effects- Pulse Worm, Ouroboros Worm, Rainbow Worm, Ring Worm, Mom's toenail, Callus, Left Hand, and Pinky Eye 
+-Worms update: 8 effects- Pulse Worm, Ouroboros Worm, Rainbow Worm, Ring Worm, Mom's toenail, Callus, Left Hand, and Pinky Eye
 -Past updates: 11 new effects + basic EID support
 </description>
-    <version>1.11</version>
+    <version>1.12</version>
     <visibility>Public</visibility>
     <tag id="Items"/>
     <tag id="Trinkets"/>
