@@ -140,8 +140,6 @@ local hairpinTriggered = 0
 local cacheUpdateTrinkets = {
 	["Store Key"] = {id = 83, cache = {CacheFlag.CACHE_DAMAGE}, playerFlags = {0,0,0,0,0,0,0,0}}, 
 	["Pulse Worm"] = {id = 9, cache = {CacheFlag.CACHE_DAMAGE}, playerFlags = {0,0,0,0,0,0,0,0}}, 
-	["Ring Worm"] = {id = 11, cache = {CacheFlag.CACHE_FIREDELAY}, playerFlags = {0,0,0,0,0,0,0,0}}, 
-	["Ouroboros Worm"] = {id = 96, cache = {CacheFlag.CACHE_FIREDELAY, CacheFlag.CACHE_LUCK}, playerFlags = {0,0,0,0,0,0,0,0}}, 
 	["Rainbow Worm"] = {id = 64, cache = {CacheFlag.CACHE_FIREDELAY}, playerFlags = {0,0,0,0,0,0,0,0}}, 
 	["Callus"] = {id = 14, cache = {CacheFlag.CACHE_SPEED}, playerFlags = {0,0,0,0,0,0,0,0}}, 
 	["Pinky Eye"] = {id = 30, cache = {CacheFlag.CACHE_LUCK}, playerFlags = {0,0,0,0,0,0,0,0}}, 
@@ -154,7 +152,7 @@ function TrinketStacking:onUpdate()
 	--DEBUG ONLY spawns items
 	if TrinketStacking.DEBUG == 1 and game:GetFrameCount() == 1 then
 		print("DEBUG MODE ENABLED FOR TRINKET STACKING PLUS")
-		player = Isaac.GetPlayer(1)
+		local player = Isaac.GetPlayer(1)
 		
 		--Isaac.ExecuteCommand("debug 4") --Big dmg
 		Isaac.ExecuteCommand("debug 3") --Infinite hp
@@ -290,14 +288,14 @@ function TrinketStacking:onUpdate()
 		for i = 1, game:GetNumPlayers() do
 			for _, pickup in pairs(Isaac.FindByType(EntityType.ENTITY_PICKUP)) do
 				if pickup:GetData().TStack_Myosotis == nil then
-					rng = player:GetTrinketRNG(TrinketType.TRINKET_MYOSOTIS)
-					rngRoll = rng:RandomInt(100)
-					rngChance = 15 + (player:GetTrinketMultiplier(TrinketType.TRINKET_MYOSOTIS) - 1) * 10
+					local rng = player:GetTrinketRNG(TrinketType.TRINKET_MYOSOTIS)
+					local rngRoll = rng:RandomInt(100)
+					local rngChance = 15 + (player:GetTrinketMultiplier(TrinketType.TRINKET_MYOSOTIS) - 1) * 10
 					--print("Dupe rng: " .. rngRoll .. "|" .. rngChance)
 					
 					if rngRoll < rngChance then
 						--print("Duped")
-						duplicate = Isaac.Spawn(EntityType.ENTITY_PICKUP, pickup.Variant, pickup.SubType, pickup.Position, Vector(-2 + rng:RandomInt(2), -2 + rng:RandomInt(2)), player)
+						local duplicate = Isaac.Spawn(EntityType.ENTITY_PICKUP, pickup.Variant, pickup.SubType, pickup.Position, Vector(-2 + rng:RandomInt(2), -2 + rng:RandomInt(2)), player)
 						duplicate:GetData().TStack_Myosotis = 1
 					end
 				end
@@ -308,7 +306,7 @@ function TrinketStacking:onUpdate()
 
 	--Flagging for cache changing trinkets
 	for i = 1, game:GetNumPlayers() do
-		player = game:GetPlayer(i)
+		local player = game:GetPlayer(i)
 		for _, trinket in pairs(cacheUpdateTrinkets) do
 			if trinket.playerFlags[i] ~= nil then
 				--Flag trinket if they didnt already have it
@@ -345,7 +343,7 @@ function TrinketStacking:onUpdate()
 	--Stomping for Mom's Toenail
 	if ((25 * 30) + game:GetFrameCount() ) % (30 * 35) == 1 then
 		for i = 1, game:GetNumPlayers() do
-			player = game:GetPlayer(i)	
+			local player = game:GetPlayer(i)	
 			if player:GetTrinketMultiplier(TrinketType.TRINKET_MOMS_TOENAIL) > 1 then
 				local maxFeet = player:GetTrinketMultiplier(TrinketType.TRINKET_MOMS_TOENAIL) - 1
 				local currFeet = 0
@@ -368,7 +366,7 @@ function TrinketStacking:onUpdate()
 	--Checking for Strange key
 	if game:GetFrameCount() % 30 == 1 then
 		for i = 1, game:GetNumPlayers() do
-			player = game:GetPlayer(i)	
+			local player = game:GetPlayer(i)	
 			local checkedSize = 0
 			local hasItem = {0,0}
 			for slot = 1, 2 do --For both active item slots
@@ -397,7 +395,7 @@ end
 
 function TrinketStacking:onRender() 
 	for i = 1, game:GetNumPlayers() do
-		player = game:GetPlayer(i)
+		local player = game:GetPlayer(i)
 		player:GetData().pNum = i			
 	end
 
@@ -406,11 +404,11 @@ end
 --On new room entered: Locusts
 function TrinketStacking:onNewRoom() 
 	hairpinTriggered = 0
-	level = game:GetLevel()
-	room = level:GetCurrentRoom()
-	roomDesc = level:GetCurrentRoomDesc()
-	roomConfigR = roomDesc.Data
-	stageID = roomConfigR.StageID
+	local level = game:GetLevel()
+	local room = level:GetCurrentRoom()
+	local roomDesc = level:GetCurrentRoomDesc()
+	local roomConfigR = roomDesc.Data
+	local stageID = roomConfigR.StageID
 	--Check to see if the room has been seen before
 	if(roomDesc.VisitedCount <= 1) then
 		if not roomDesc.Clear  then
@@ -436,7 +434,7 @@ function TrinketStacking:onNewRoom()
 	
 	for _, bSoul in pairs(Isaac.FindByType(EntityType.ENTITY_FAMILIAR, FamiliarVariant.BLUE_BABY_SOUL) ) do
 		if bSoul:GetData().StackedSpawn ~= nil  then
-			rng = game:GetPlayer(0):GetTrinketRNG(TrinketType.TRINKET_SOUL)
+			local rng = game:GetPlayer(0):GetTrinketRNG(TrinketType.TRINKET_SOUL)
 			bSoul.Position = bSoul.Position + Vector(rng:RandomInt(30),rng:RandomInt(30))
 		end
 	
@@ -447,13 +445,13 @@ end
 --On hostile room start, for locusts
 function TrinketStacking:onHostileRoomStart()
 	for pNum = 1, game:GetNumPlayers() do
-		player = game:GetPlayer(pNum)
+		local player = game:GetPlayer(pNum)
 		--Code for all locust items
 		for locustIndex = 1, 5 do
 			if player:GetTrinketMultiplier(TrinketType.TRINKET_PAY_TO_WIN + locustIndex) > 1 then
 				for j = 1, (player:GetTrinketMultiplier(TrinketType.TRINKET_PAY_TO_WIN + locustIndex) - 1) do
-					rng = player:GetTrinketRNG(TrinketType.TRINKET_PAY_TO_WIN + locustIndex)
-					rngRoll = rng:RandomInt(100)
+					local rng = player:GetTrinketRNG(TrinketType.TRINKET_PAY_TO_WIN + locustIndex)
+					local rngRoll = rng:RandomInt(100)
 					--print("Locust[" .. locustIndex .. "] Roll: " .. rngRoll)
 					if rngRoll <= 75 then 
 						Isaac.Spawn(EntityType.ENTITY_FAMILIAR, FamiliarVariant.BLUE_FLY, locustIndex, player.Position, Vector(0,0), player)
@@ -470,9 +468,9 @@ function TrinketStacking:onAngelKill(ent)
 	--Make sure the room is either angel or sac room so it doesnt trigger for the mega satan fight
 	if game:GetRoom():GetType() == RoomType.ROOM_ANGEL  or game:GetRoom():GetType() == RoomType.ROOM_SACRIFICE then
 		for i = 1, game:GetNumPlayers() do
-			player = game:GetPlayer(i)
+			local player = game:GetPlayer(i)
 			if player:GetTrinketMultiplier(TrinketType.TRINKET_FILIGREE_FEATHERS) > 1 then
-				rng = RNG()
+				local rng = RNG()
 				for i = 1, (player:GetTrinketMultiplier(TrinketType.TRINKET_FILIGREE_FEATHERS) - 1) do
 					--print("Triggered filigree soul heart!")
 					Isaac.Spawn(EntityType.ENTITY_PICKUP, PickupVariant.PICKUP_HEART, HeartSubType.HEART_SOUL, ent.Position, Vector(-5 + rng:RandomInt(10),-5 + rng:RandomInt(10) ), player)
@@ -488,22 +486,22 @@ end
 --On start of new level, for Wicked Crown/Holy Crown, Stem Cells
 function TrinketStacking:onNewLevel() 
 	hairpinTriggered = 0
-	level = game:GetLevel()
-	stage = level:GetStage()
-	room = level:GetCurrentRoom()
-	roomDesc = level:GetCurrentRoomDesc()
-	roomConfigR = roomDesc.Data
-	stageID = roomConfigR.StageID
+	local level = game:GetLevel()
+	local stage = level:GetStage()
+	local room = level:GetCurrentRoom()
+	local roomDesc = level:GetCurrentRoomDesc()
+	local roomConfigR = roomDesc.Data
+	local stageID = roomConfigR.StageID
 	
 	--Wicked/Holy Crown and Pay To Win Code
 	if stage == LevelStage.STAGE6 then --Dark room/Chest stage	
 		--Pay To Win
 		if stageID == 16 or stageID == 17 then --Dark Room or Chest
 			for i = 1, game:GetNumPlayers() do
-				player = game:GetPlayer(i)
+				local player = game:GetPlayer(i)
 				if player:GetTrinketMultiplier(TrinketType.TRINKET_PAY_TO_WIN) > 1 then
 					
-					rng = player:GetTrinketRNG(TrinketType.TRINKET_PAY_TO_WIN)
+					local rng = player:GetTrinketRNG(TrinketType.TRINKET_PAY_TO_WIN)
 					--for i = 1, (player:GetTrinketMultiplier(TrinketType.TRINKET_PAY_TO_WIN) - 1) do
 					for i = 1, (player:GetTrinketMultiplier(TrinketType.TRINKET_PAY_TO_WIN) - 1) do	
 						--print("Spawning")
@@ -513,8 +511,8 @@ function TrinketStacking:onNewLevel()
 			end		
 		end
 		--Wicked/Holy Crown
-		crownTrinketID = nil
-		crownChestType = nil
+		local crownTrinketID = nil
+		local crownChestType = nil
 		if stageID == 16 then --Dark room only
 			crownTrinketID = TrinketType.TRINKET_WICKED_CROWN
 			crownChestType = PickupVariant.PICKUP_REDCHEST
@@ -525,9 +523,9 @@ function TrinketStacking:onNewLevel()
 		
 		if crownChestType ~= nil and crownTrinketID ~=nil then
 			for i = 1, game:GetNumPlayers() do
-				player = game:GetPlayer(i)
+				local player = game:GetPlayer(i)
 				if player:GetTrinketMultiplier(crownTrinketID) > 1 then
-					rng = RNG()
+					local rng = RNG()
 					for i = 1, (player:GetTrinketMultiplier(crownTrinketID) - 1) do		
 						Isaac.Spawn(EntityType.ENTITY_PICKUP, crownChestType, ChestSubType.CHEST_CLOSED, Vector(320,270), Vector(-10 + rng:RandomInt(20),-10 + rng:RandomInt(20) ), player)
 					end
@@ -539,9 +537,9 @@ function TrinketStacking:onNewLevel()
 
 	--Stem Cells code
 	for i = 1, game:GetNumPlayers() do
-		player = game:GetPlayer(i)
+		local player = game:GetPlayer(i)
 		if player:GetTrinketMultiplier(TrinketType.TRINKET_STEM_CELL) > 1 then
-			rng = RNG()
+			local rng = RNG()
 			for i = 1, (player:GetTrinketMultiplier(TrinketType.TRINKET_STEM_CELL) - 1) do		
 				Isaac.Spawn(EntityType.ENTITY_PICKUP, PickupVariant.PICKUP_HEART, HeartSubType.HEART_FULL, Vector(320,270), Vector(-5 + rng:RandomInt(10),-5 + rng:RandomInt(10) ), player)
 			end
@@ -560,16 +558,17 @@ end
 local momsHeartKills = 0
 function TrinketStacking:onMomsHeartKill(ent)
 	momsHeartKills = momsHeartKills + 1
-	level = game:GetLevel()
-	stage = level:GetStage()
+	local level = game:GetLevel()
+	local stage = level:GetStage()
 	--Make sure the room is the boss room on the womb
 	if game:GetRoom():GetType() == RoomType.ROOM_BOSS  and (stage == LevelStage.STAGE4_2 or stage == LevelStage.STAGE4_1) and momsHeartKills % 2 == 1 then
 		local seed = game:GetSeeds():GetStartSeed()
 		for i = 1, game:GetNumPlayers() do
 			--Iterate for Bloody Crown and Silver Dollar
-			player = game:GetPlayer(i)
+			local player = game:GetPlayer(i)
 			for j = 1, 2 do
 					local price = 0
+					local pool = ItemPoolType.POOL_BOSS
 					local crownTrinketID = nil
 					if j == 1 then
 						crownTrinketID = TrinketType.TRINKET_BLOODY_CROWN
@@ -657,7 +656,7 @@ function TrinketStacking:onCacheEval(player, cacheFlag)
 			end
 		end	
 		
-		pNum = player:GetData().pNum
+		local pNum = player:GetData().pNum
 		--Store key code
 		local storeKeyDmg = 0
 		if pNum ~= nil and player:GetTrinketMultiplier(TrinketType.TRINKET_STORE_KEY) > 1 and GameState.StoreKeyData[pNum] >= 1 then
@@ -677,18 +676,6 @@ function TrinketStacking:onCacheEval(player, cacheFlag)
 			player.Damage = player.Damage + bulbBoosts.DMG + storeKeyDmg
 		end
 		if cacheFlag == CacheFlag.CACHE_FIREDELAY then
-			--Apply Ring Worm
-			if cacheUpdateTrinkets["Ring Worm"].playerFlags[pNum] >= 2 then
-				ringWormBoost = Helpers:getTearBoost(1 + (1.5 * (player:GetTrinketMultiplier(TrinketType.TRINKET_RING_WORM) - 1) ), player.MaxFireDelay, MAX_TEARS)
-				player.MaxFireDelay = player.MaxFireDelay - ringWormBoost
-			
-			end	
-			--Apply Ouroboros Worm
-			if cacheUpdateTrinkets["Ouroboros Worm"].playerFlags[pNum] >= 2 then
-				oWormBoost = Helpers:getTearBoost(1 + (1.5 * (player:GetTrinketMultiplier(TrinketType.TRINKET_OUROBOROS_WORM) - 1)), player.MaxFireDelay, MAX_TEARS)
-				player.MaxFireDelay = player.MaxFireDelay - oWormBoost
-			
-			end	
 			--Apply Rainbow worm
 			if cacheUpdateTrinkets["Rainbow Worm"].playerFlags[pNum] >= 2 then
 				rWormBoost = Helpers:getTearBoost(1 + (1.5 * (player:GetTrinketMultiplier(TrinketType.TRINKET_RAINBOW_WORM) - 1)), player.MaxFireDelay, MAX_TEARS)
@@ -703,10 +690,6 @@ function TrinketStacking:onCacheEval(player, cacheFlag)
 			player.MoveSpeed = player.MoveSpeed + bulbBoosts.SPEED
 		end
 		if cacheFlag == CacheFlag.CACHE_LUCK then
-			--Apply Ouroboros Worm
-			if cacheUpdateTrinkets["Ouroboros Worm"].playerFlags[pNum] >= 2 then
-				player.Luck = player.Luck + (1.5 * (player:GetTrinketMultiplier(TrinketType.TRINKET_OUROBOROS_WORM) - 1))
-			end		
 			--Apply Pinky Eye
 			if cacheUpdateTrinkets["Pinky Eye"].playerFlags[pNum] >= 2 then
 				player.Luck = player.Luck + (2 * (player:GetTrinketMultiplier(TrinketType.TRINKET_PINKY_EYE) - 1))
@@ -725,7 +708,7 @@ end
 
 function TrinketStacking:onPlayerUpdate(player) 
 
-	data = player:GetData()
+	local data = player:GetData()
 
 	--The "gassy" effect caused by butt penny, stores farts for the player
 	if data.BP_Gassy ~= nil and data.BP_Gassy.Time > 0 then
@@ -742,17 +725,17 @@ end
 
 --Chance to add addition flies/spiders with Fish Tail
 function TrinketStacking:onBlueFlySpider(fly)
-	player = fly.Player
+	local player = fly.Player
 	if (fly:GetData().Stacked_Check == nil) and (player:GetTrinketMultiplier(TrinketType.TRINKET_FISH_TAIL) > 1) then
 		fly:GetData().Stacked_Check = true
-		rng = player:GetTrinketRNG(TrinketType.TRINKET_FISH_TAIL)
+		local rng = player:GetTrinketRNG(TrinketType.TRINKET_FISH_TAIL)
 		
 		for rolls = 1, (player:GetTrinketMultiplier(TrinketType.TRINKET_FISH_TAIL) - 1) do
-			rngRoll = rng:RandomInt(100)
+			local rngRoll = rng:RandomInt(100)
 			--print("FishTail: " .. rngRoll .. "|3")
 			if rngRoll <= 3 then
 				--print("Extra fly spawn")
-				spawned = Isaac.Spawn(EntityType.ENTITY_FAMILIAR, fly.Variant, 0, player.Position, Vector(0,0), player)
+				local spawned = Isaac.Spawn(EntityType.ENTITY_FAMILIAR, fly.Variant, 0, player.Position, Vector(0,0), player)
 				spawned:GetData().Stacked_Check = true
 			end		
 		end
@@ -762,15 +745,15 @@ end
 
 function TrinketStacking:onRoomClear(rng, pos)
 	for i = 1, game:GetNumPlayers() do
-		player = game:GetPlayer(i)
+		local player = game:GetPlayer(i)
 		--AAA Battery code
 		if player:GetTrinketMultiplier(TrinketType.TRINKET_AAA_BATTERY) > 1 then
-			rngRoll = rng:RandomInt(100)
-			rngChance = 5 * player:GetTrinketMultiplier(TrinketType.TRINKET_AAA_BATTERY) --10% chance to get micro battery on room clear, extra 5% per multiplier
+			local rngRoll = rng:RandomInt(100)
+			local rngChance = 5 * player:GetTrinketMultiplier(TrinketType.TRINKET_AAA_BATTERY) --10% chance to get micro battery on room clear, extra 5% per multiplier
 			--print("Battery roll: " .. rngRoll .. "|" .. rngChance)
 			
 			if rngRoll <= rngChance then
-				battery = Isaac.Spawn(EntityType.ENTITY_PICKUP, PickupVariant.PICKUP_LIL_BATTERY, BatterySubType.BATTERY_MICRO, pos, Vector(0.25,-0.25), nil)
+				local battery = Isaac.Spawn(EntityType.ENTITY_PICKUP, PickupVariant.PICKUP_LIL_BATTERY, BatterySubType.BATTERY_MICRO, pos, Vector(0.25,-0.25), nil)
 			end
 		end
 	
@@ -817,15 +800,15 @@ end
 function TrinketStacking:onSecretRoomEntered()
 	--print("Secret room entered!")
 	for i = 1, game:GetNumPlayers() do
-		player = game:GetPlayer(i)
+		local player = game:GetPlayer(i)
 		if player:GetTrinketMultiplier(TrinketType.TRINKET_FRAGMENTED_CARD) > 1 then
 			for i = 1, player:GetTrinketMultiplier(TrinketType.TRINKET_FRAGMENTED_CARD) - 1 do
-				rng = player:GetTrinketRNG(TrinketType.TRINKET_FRAGMENTED_CARD)
-				rngRoll = rng:RandomInt(100)
-				rngChance = 50
+				local rng = player:GetTrinketRNG(TrinketType.TRINKET_FRAGMENTED_CARD)
+				local rngRoll = rng:RandomInt(100)
+				local rngChance = 50
 				--print("Frag Card Sack Roll: " .. rngRoll .. "|" .. rngChance)
 				if rngRoll <= rngChance then
-					sack = Isaac.Spawn(EntityType.ENTITY_PICKUP, PickupVariant.PICKUP_GRAB_BAG, 0, player.Position, Vector(-15 + rng:RandomInt(30),-15 + rng:RandomInt(30)), nil)
+					local sack = Isaac.Spawn(EntityType.ENTITY_PICKUP, PickupVariant.PICKUP_GRAB_BAG, 0, player.Position, Vector(-15 + rng:RandomInt(30),-15 + rng:RandomInt(30)), nil)
 				end	
 			end
 		end
@@ -834,13 +817,13 @@ end
 
 --On player hurt, used for safety scissors and crow heart, cracked dice, missing poster
 function TrinketStacking:onPlayerHurt(player, dmg, flags, dmgSource, cdFrames)
-	player = player:ToPlayer()
+	local player = player:ToPlayer()
 	--Safety scissors code
 	if (flags & DamageFlag.DAMAGE_EXPLOSION) > 0 then
 		if player:GetTrinketMultiplier(TrinketType.TRINKET_SAFETY_SCISSORS) > 1 then
-			rng = player:GetTrinketRNG(TrinketType.TRINKET_SAFETY_SCISSORS)
-			rngRoll = rng:RandomInt(100)
-			rngChance = 40 + (20 * (player:GetTrinketMultiplier(TrinketType.TRINKET_SAFETY_SCISSORS) - 1))
+			local rng = player:GetTrinketRNG(TrinketType.TRINKET_SAFETY_SCISSORS)
+			local rngRoll = rng:RandomInt(100)
+			local rngChance = 40 + (20 * (player:GetTrinketMultiplier(TrinketType.TRINKET_SAFETY_SCISSORS) - 1))
 			--print("Resist expl: " .. rngRoll .. "|" .. rngChance)
 			if rngRoll <= rngChance then
 				return false
@@ -851,9 +834,9 @@ function TrinketStacking:onPlayerHurt(player, dmg, flags, dmgSource, cdFrames)
 	--Crow Heart code
 	if (flags & DamageFlag.DAMAGE_FAKE) == 0 then
 		if player:GetTrinketMultiplier(TrinketType.TRINKET_CROW_HEART) > 1 then
-			rng = player:GetTrinketRNG(TrinketType.TRINKET_CROW_HEART)
-			rngRoll = rng:RandomInt(100)
-			rngChance = 20 + (5 * (player:GetTrinketMultiplier(TrinketType.TRINKET_CROW_HEART) - 1))
+			local rng = player:GetTrinketRNG(TrinketType.TRINKET_CROW_HEART)
+			local rngRoll = rng:RandomInt(100)
+			local rngChance = 20 + (5 * (player:GetTrinketMultiplier(TrinketType.TRINKET_CROW_HEART) - 1))
 			--print("Fake dmg: " .. rngRoll .. "|" .. rngChance)
 			if rngRoll <= rngChance then
 				player:TakeDamage(0, DamageFlag.DAMAGE_FAKE, EntityRef(player), 9999)
@@ -864,9 +847,9 @@ function TrinketStacking:onPlayerHurt(player, dmg, flags, dmgSource, cdFrames)
 
 	--Bag lunch code
 	if player:GetTrinketMultiplier(TrinketType.TRINKET_BAG_LUNCH) > 1 then
-		rng = player:GetTrinketRNG(TrinketType.TRINKET_BAG_LUNCH)
-		rngRoll = rng:RandomInt(100)
-		rngChance = 2 * (player:GetTrinketMultiplier(TrinketType.TRINKET_BAG_LUNCH) - 1 )
+		local rng = player:GetTrinketRNG(TrinketType.TRINKET_BAG_LUNCH)
+		local rngRoll = rng:RandomInt(100)
+		local rngChance = 2 * (player:GetTrinketMultiplier(TrinketType.TRINKET_BAG_LUNCH) - 1 )
 		
 		--print("Bag lunch roll: " .. rngRoll .. "|" .. rngChance)
 		if rngRoll <= rngChance then
@@ -877,9 +860,9 @@ function TrinketStacking:onPlayerHurt(player, dmg, flags, dmgSource, cdFrames)
 
 	--Wish bone code
 	if player:GetTrinketMultiplier(TrinketType.TRINKET_WISH_BONE) > 1 then
-		rng = player:GetTrinketRNG(TrinketType.TRINKET_WISH_BONE)
-		rngRoll = rng:RandomInt(100)
-		rngChance = 2 * (player:GetTrinketMultiplier(TrinketType.TRINKET_WISH_BONE) - 1 )
+		local rng = player:GetTrinketRNG(TrinketType.TRINKET_WISH_BONE)
+		local rngRoll = rng:RandomInt(100)
+		local rngChance = 2 * (player:GetTrinketMultiplier(TrinketType.TRINKET_WISH_BONE) - 1 )
 		
 		--print("Wishbone roll: " .. rngRoll .. "|" .. rngChance)
 		if rngRoll <= rngChance then
@@ -887,8 +870,8 @@ function TrinketStacking:onPlayerHurt(player, dmg, flags, dmgSource, cdFrames)
 			local seed = game:GetSeeds():GetStartSeed()
 			local roomType = game:GetRoom():GetType()
 			
-			pool = game:GetItemPool()
-			poolType = pool:GetPoolForRoom(roomType, seed)
+			local pool = game:GetItemPool()
+			local poolType = pool:GetPoolForRoom(roomType, seed)
 			--print("room = " .. roomType .. " pool = " .. poolType)
 			Helpers:spawnItemFromPool( poolType, player.Position, 0, seed)
 			
@@ -897,9 +880,9 @@ function TrinketStacking:onPlayerHurt(player, dmg, flags, dmgSource, cdFrames)
 
 	--Cracked dice code
 	if player:GetTrinketMultiplier(TrinketType.TRINKET_CRACKED_DICE) > 1 then
-		rng = player:GetTrinketRNG(TrinketType.TRINKET_CRACKED_DICE)
-		rngRoll = rng:RandomInt(100)
-		rngChance = 3 + (2 * (player:GetTrinketMultiplier(TrinketType.TRINKET_CRACKED_DICE) - 1 ) )
+		local rng = player:GetTrinketRNG(TrinketType.TRINKET_CRACKED_DICE)
+		local rngRoll = rng:RandomInt(100)
+		local rngChance = 3 + (2 * (player:GetTrinketMultiplier(TrinketType.TRINKET_CRACKED_DICE) - 1 ) )
 		
 		--print("cracked dice roll: " .. rngRoll .. "|" .. rngChance)
 		if rngRoll <= rngChance then
@@ -912,9 +895,9 @@ function TrinketStacking:onPlayerHurt(player, dmg, flags, dmgSource, cdFrames)
 	if player:GetTrinketMultiplier(TrinketType.TRINKET_MISSING_POSTER) > 1 then
 		if flags == (DamageFlag.DAMAGE_SPIKES + DamageFlag.DAMAGE_NO_PENALTIES) and dmgSource.Type == 0 and dmgSource.Variant == 0 and game:GetRoom():GetType() == RoomType.ROOM_SACRIFICE then
 			--print("Sac room dmg taken")
-			rng = player:GetTrinketRNG(TrinketType.TRINKET_MISSING_POSTER)
-			rngRoll = rng:RandomInt(100)
-			rngChance = 10 + 5 * (player:GetTrinketMultiplier(TrinketType.TRINKET_MISSING_POSTER) )
+			local rng = player:GetTrinketRNG(TrinketType.TRINKET_MISSING_POSTER)
+			local rngRoll = rng:RandomInt(100)
+			local rngChance = 10 + 5 * (player:GetTrinketMultiplier(TrinketType.TRINKET_MISSING_POSTER) )
 			--print("m poster roll: " .. rngRoll .. "|" .. rngChance)
 			if rngRoll <= rngChance then
 				Isaac.Spawn(EntityType.ENTITY_PICKUP, 0, 0, player.Position, Vector(-2 + rng:RandomInt(4),-2 + rng:RandomInt(4) ), nil)
@@ -929,8 +912,8 @@ end
 --Store key code
 function TrinketStacking:onShopEntered()
 	for i = 1, game:GetNumPlayers() do
-		player = game:GetPlayer(i)
-		pNum = player:GetData().pNum
+		local player = game:GetPlayer(i)
+		local pNum = player:GetData().pNum
 		if pNum ~= nil and player:GetTrinketMultiplier(TrinketType.TRINKET_STORE_KEY) > 1 then
 			GameState.StoreKeyData[pNum] = GameState.StoreKeyData[pNum] + (player:GetTrinketMultiplier(TrinketType.TRINKET_STORE_KEY) - 1)
 			player:AddCacheFlags(CacheFlag.CACHE_DAMAGE)
@@ -944,17 +927,17 @@ end
 function TrinketStacking:onNPCDeath(enemy)
 	--On boss killed
 	if enemy:IsBoss() and hairpinTriggered == 0 then
-		level = game:GetLevel()
-		room = level:GetCurrentRoom()
-		roomType = room:GetType()
+		local level = game:GetLevel()
+		local room = level:GetCurrentRoom()
+		local roomType = room:GetType()
 		if roomType == RoomType.ROOM_BOSS then
 			for i = 1, game:GetNumPlayers() do
-				player = game:GetPlayer(i)		
+				local player = game:GetPlayer(i)		
 				if player:GetTrinketMultiplier(TrinketType.TRINKET_HAIRPIN) > 1 then
-					rng = player:GetTrinketRNG(TrinketType.TRINKET_HAIRPIN)
+					local rng = player:GetTrinketRNG(TrinketType.TRINKET_HAIRPIN)
 					hairpinTriggered = 1
 					for spawns = 1, (player:GetTrinketMultiplier(TrinketType.TRINKET_HAIRPIN) - 1) do
-						battery = Isaac.Spawn(EntityType.ENTITY_PICKUP, PickupVariant.PICKUP_LIL_BATTERY, BatterySubType.BATTERY_NORMAL, Vector(320,270), Vector(-10 + rng:RandomInt(10),rng:RandomInt(3) ), nil)
+						local battery = Isaac.Spawn(EntityType.ENTITY_PICKUP, PickupVariant.PICKUP_LIL_BATTERY, BatterySubType.BATTERY_NORMAL, Vector(320,270), Vector(-10 + rng:RandomInt(10),rng:RandomInt(3) ), nil)
 					end
 				end
 			end
@@ -965,12 +948,12 @@ end
 --On Coin pickup, for rotten penny, butt penny, cursed penny
 function TrinketStacking:onCoinPickup(pickup, ent, bool)
 	if ent.Type == EntityType.ENTITY_PLAYER and pickup.SubType ~= CoinSubType.COIN_STICKYNICKEL then
-		player = ent:ToPlayer()
+		local player = ent:ToPlayer()
 		--Rotten Penny code
 		if player:GetTrinketMultiplier(TrinketType.TRINKET_ROTTEN_PENNY) > 1 then
-			rng = player:GetTrinketRNG(TrinketType.TRINKET_ROTTEN_PENNY)
-			rngRoll = rng:RandomInt(100)
-			rngChance = (30 + 20 * (player:GetTrinketMultiplier(TrinketType.TRINKET_ROTTEN_PENNY) - 1) )
+			local rng = player:GetTrinketRNG(TrinketType.TRINKET_ROTTEN_PENNY)
+			local rngRoll = rng:RandomInt(100)
+			local rngChance = (30 + 20 * (player:GetTrinketMultiplier(TrinketType.TRINKET_ROTTEN_PENNY) - 1) )
 			--print("Roll: " .. rngRoll .. "|" .. rngChance)	
 			if rngRoll <= rngChance then 
 				player:AddBlueFlies(1, player.Position, player )
@@ -979,7 +962,7 @@ function TrinketStacking:onCoinPickup(pickup, ent, bool)
 	
 		--Add gassy stacks with butt penny
 		if player:GetTrinketMultiplier(TrinketType.TRINKET_BUTT_PENNY) > 1 then
-			data = ent:GetData()
+			local data = ent:GetData()
 			if data.BP_Gassy == nil or data.BP_Gassy.Time < 0 then
 				data.BP_Gassy = { Time = 0, LastFrame = 0 }
 			end
@@ -1003,8 +986,8 @@ function TrinketStacking:onCoinPickup(pickup, ent, bool)
 	
 		--Cursed penny code
 		if player:GetTrinketMultiplier(TrinketType.TRINKET_CURSED_PENNY) > 1 then
-			rng = player:GetTrinketRNG(TrinketType.TRINKET_CURSED_PENNY)
-			rngRoll = rng:RandomInt(100)	
+			local rng = player:GetTrinketRNG(TrinketType.TRINKET_CURSED_PENNY)
+			local rngRoll = rng:RandomInt(100)	
 			--A better value coin will give a flat better chance to create an item
 			local coinMult = 0
 			if pickup.SubType == CoinSubType.COIN_DOUBLEPACK or pickup.SubType == CoinSubType.COIN_LUCKYPENNY or pickup.SubType == CoinSubType.COIN_NICKEL then
@@ -1012,7 +995,7 @@ function TrinketStacking:onCoinPickup(pickup, ent, bool)
 			elseif pickup.SubType == CoinSubType.COIN_DIME then
 				coinMult = 4
 			end
-			rngChance = coinMult + ( 4 + (2 * player:GetTrinketMultiplier(TrinketType.TRINKET_CURSED_PENNY) - 1) )
+			local rngChance = coinMult + ( 4 + (2 * player:GetTrinketMultiplier(TrinketType.TRINKET_CURSED_PENNY) - 1) )
 			--print("Cursed penny roll: " .. rngRoll .. "|" .. rngChance) 
 			if rngRoll <= rngChance then
 				--print("Keeper box used")
@@ -1022,9 +1005,9 @@ function TrinketStacking:onCoinPickup(pickup, ent, bool)
 	
 		--Counterfeit penny code
 		if player:GetTrinketMultiplier(TrinketType.TRINKET_COUNTERFEIT_PENNY) > 1 then	
-			rng = player:GetTrinketRNG(TrinketType.TRINKET_COUNTERFEIT_PENNY)
-			rngRoll = rng:RandomInt(100)	
-			rngChance = 5 + (15 * (player:GetTrinketMultiplier(TrinketType.TRINKET_COUNTERFEIT_PENNY) - 1) ) 
+			local rng = player:GetTrinketRNG(TrinketType.TRINKET_COUNTERFEIT_PENNY)
+			local rngRoll = rng:RandomInt(100)	
+			local rngChance = 5 + (15 * (player:GetTrinketMultiplier(TrinketType.TRINKET_COUNTERFEIT_PENNY) - 1) ) 
 			--print("Counterfeit penny roll: " .. rngRoll .. "|" .. rngChance) 
 			if rngRoll <= rngChance then
 				--print("Counter penny proc")
@@ -1037,7 +1020,7 @@ end
 --On heart pickup, for apple of sodom
 function TrinketStacking:onHeartPickup(pickup, ent, bool)
 	if ent.Type == EntityType.ENTITY_PLAYER then
-		player = ent:ToPlayer()
+		local player = ent:ToPlayer()
 		--Apple of sodom code
 		if player:GetTrinketMultiplier(TrinketType.TRINKET_APPLE_OF_SODOM) > 1 then		
 			--You get more chances at extra spiders if the heart is of greater value
@@ -1068,18 +1051,18 @@ end
 --Only for equality
 function TrinketStacking:onEqualityPickup(pickup, ent, bool)
 	if ent.Type == EntityType.ENTITY_PLAYER and pickup.SubType ~= CoinSubType.COIN_STICKYNICKEL then
-		player = ent:ToPlayer()
+		local player = ent:ToPlayer()
 		if player:GetTrinketMultiplier(TrinketType.TRINKET_EQUALITY) > 1 then
-			dropVariant = Helpers:getLowestConsumable()
+			local dropVariant = Helpers:getLowestConsumable()
 			if dropVariant ~= nil then
 				--Do extra drop
-				rng = player:GetTrinketRNG(TrinketType.TRINKET_EQUALITY)
-				rngRoll = rng:RandomInt(100)
+				local rng = player:GetTrinketRNG(TrinketType.TRINKET_EQUALITY)
+				local rngRoll = rng:RandomInt(100)
 				--10% chance per extra multiplier of equality
-				rngChance = math.min(35, 5 + 10 * (player:GetTrinketMultiplier(TrinketType.TRINKET_EQUALITY) - 1))
+				local rngChance = math.min(35, 5 + 10 * (player:GetTrinketMultiplier(TrinketType.TRINKET_EQUALITY) - 1))
 				--print("Equality Roll: " .. rngRoll .. "|" .. rngChance)
 				if rngRoll <= rngChance then
-					loot = Isaac.Spawn(EntityType.ENTITY_PICKUP, dropVariant, 0, player.Position, Vector(-5 + rng:RandomInt(10),-5 + rng:RandomInt(10)), nil)
+					local loot = Isaac.Spawn(EntityType.ENTITY_PICKUP, dropVariant, 0, player.Position, Vector(-5 + rng:RandomInt(10),-5 + rng:RandomInt(10)), nil)
 				end
 				
 			end
@@ -1092,7 +1075,7 @@ end
 --For buying shop/devil deals, Store Credit, Your Soul
 function TrinketStacking:onShopPickup(pickup, ent, bool)
 	if ent.Type == EntityType.ENTITY_PLAYER then
-		player = ent:ToPlayer()
+		local player = ent:ToPlayer()
 		--Store Credit code
 		--print("is shop item")
 		if pickup:IsShopItem() and player.ItemHoldCooldown == 0 and not player:IsHoldingItem() then
@@ -1175,20 +1158,20 @@ end
 
 --For Store credit
 function TrinketStacking:onStoreCreditPurchase(player, pickup)
-	rng = player:GetTrinketRNG(TrinketType.TRINKET_STORE_CREDIT)
-	rngRoll = rng:RandomInt(100)
-	rngChance = math.min(35, 5 + 10 * (player:GetTrinketMultiplier(TrinketType.TRINKET_STORE_CREDIT) - 1))
+	local rng = player:GetTrinketRNG(TrinketType.TRINKET_STORE_CREDIT)
+	local rngRoll = rng:RandomInt(100)
+	local rngChance = math.min(35, 5 + 10 * (player:GetTrinketMultiplier(TrinketType.TRINKET_STORE_CREDIT) - 1))
 	--print("Store Credit Roll: " .. rngRoll .. "|" .. rngChance)
 	if rngRoll <= rngChance then
 		loot = Isaac.Spawn(EntityType.ENTITY_PICKUP, PickupVariant.PICKUP_TRINKET, TrinketType.TRINKET_STORE_CREDIT, player.Position, Vector(-5 + rng:RandomInt(10),-5 + rng:RandomInt(10)), nil)
 	--RNG Failed
 	else
 		--print("Rng failed, spawning coins")
-		minCoins = (player:GetTrinketMultiplier(TrinketType.TRINKET_STORE_CREDIT) - 1) * 2 + 2
+		local minCoins = (player:GetTrinketMultiplier(TrinketType.TRINKET_STORE_CREDIT) - 1) * 2 + 2
 		rngRoll = minCoins + rng:RandomInt(5)	
 		--print("Min coins: " .. minCoins .. " Roll: " .. rngRoll)
 		for i = 1, rngRoll do
-			loot = Isaac.Spawn(EntityType.ENTITY_PICKUP, PickupVariant.PICKUP_COIN, 0, player.Position, Vector(-5 + rng:RandomInt(10),-5 + rng:RandomInt(10)), nil)
+			local loot = Isaac.Spawn(EntityType.ENTITY_PICKUP, PickupVariant.PICKUP_COIN, 0, player.Position, Vector(-5 + rng:RandomInt(10),-5 + rng:RandomInt(10)), nil)
 		end
 	end	
 
@@ -1196,17 +1179,17 @@ end
 --For Your Soul
 function TrinketStacking:onYourSoulPurchase(player, pickup)
 	--print("Your soul used!")
-	rng = player:GetTrinketRNG(TrinketType.TRINKET_YOUR_SOUL)
-	rngRoll = rng:RandomInt(100)
-	rngChance = math.min(25, 10 * (player:GetTrinketMultiplier(TrinketType.TRINKET_YOUR_SOUL) - 1))
+	local rng = player:GetTrinketRNG(TrinketType.TRINKET_YOUR_SOUL)
+	local rngRoll = rng:RandomInt(100)
+	local rngChance = math.min(25, 10 * (player:GetTrinketMultiplier(TrinketType.TRINKET_YOUR_SOUL) - 1))
 	--print("Your soul Roll: " .. rngRoll .. "|" .. rngChance)
 	if rngRoll <= rngChance then
-		loot = Isaac.Spawn(EntityType.ENTITY_PICKUP, PickupVariant.PICKUP_TRINKET, TrinketType.TRINKET_YOUR_SOUL, player.Position, Vector(-2 + rng:RandomInt(4),-2 + rng:RandomInt(4)), nil)
+		local loot = Isaac.Spawn(EntityType.ENTITY_PICKUP, PickupVariant.PICKUP_TRINKET, TrinketType.TRINKET_YOUR_SOUL, player.Position, Vector(-2 + rng:RandomInt(4),-2 + rng:RandomInt(4)), nil)
 	--RNG Failed
 	else
 		--print("Rng failed, spawning sacks")
 		for i = 1, (player:GetTrinketMultiplier(TrinketType.TRINKET_YOUR_SOUL) - 1) do
-			loot = Isaac.Spawn(EntityType.ENTITY_PICKUP, PickupVariant.PICKUP_GRAB_BAG, SackSubType.SACK_BLACK, player.Position, Vector(-2 + rng:RandomInt(4),-2 + rng:RandomInt(4)), nil)
+			local loot = Isaac.Spawn(EntityType.ENTITY_PICKUP, PickupVariant.PICKUP_GRAB_BAG, SackSubType.SACK_BLACK, player.Position, Vector(-2 + rng:RandomInt(4),-2 + rng:RandomInt(4)), nil)
 		end
 	end	
 
@@ -1215,12 +1198,12 @@ end
 --For Judas' Tongue
 function TrinketStacking:onJudasTonguePurchase(player, pickup)
 	--print("Judas tongue used!")
-	rng = player:GetTrinketRNG(TrinketType.TRINKET_JUDAS_TONGUE)
-	rngRoll = rng:RandomInt(100)
-	rngChance = math.min(75, 30 * (player:GetTrinketMultiplier(TrinketType.TRINKET_JUDAS_TONGUE) - 1))
+	local rng = player:GetTrinketRNG(TrinketType.TRINKET_JUDAS_TONGUE)
+	local rngRoll = rng:RandomInt(100)
+	local rngChance = math.min(75, 30 * (player:GetTrinketMultiplier(TrinketType.TRINKET_JUDAS_TONGUE) - 1))
 	--print("Judas tongue Roll: " .. rngRoll .. "|" .. rngChance)
 	if rngRoll <= rngChance then
-		loot = Isaac.Spawn(EntityType.ENTITY_PICKUP, PickupVariant.PICKUP_HEART, HeartSubType.HEART_BLACK, player.Position, Vector(-2 + rng:RandomInt(4),-2 + rng:RandomInt(4)), nil)
+		local loot = Isaac.Spawn(EntityType.ENTITY_PICKUP, PickupVariant.PICKUP_HEART, HeartSubType.HEART_BLACK, player.Position, Vector(-2 + rng:RandomInt(4),-2 + rng:RandomInt(4)), nil)
 	end	
 
 end
@@ -1234,12 +1217,12 @@ function TrinketStacking:onTearUpdate(tear)
 	if tear:GetData().FAM_TRINKET_CHECK == nil and tear.SpawnerType == EntityType.ENTITY_FAMILIAR then
 		tear:GetData().FAM_TRINKET_CHECK = 1
 		local familiar = tear.SpawnerEntity:ToFamiliar()
-		player = familiar.SpawnerEntity
+		local player = familiar.SpawnerEntity
 		player = player:ToPlayer()
 		--Extension Cord code
 		if player ~= nil and player:GetTrinketMultiplier(TrinketType.TRINKET_EXTENSION_CORD) > 1 then
-			rng = player:GetTrinketRNG(TrinketType.TRINKET_EXTENSION_CORD)
-			rngRoll = rng:RandomInt(100)
+			local rng = player:GetTrinketRNG(TrinketType.TRINKET_EXTENSION_CORD)
+			local rngRoll = rng:RandomInt(100)
 			if rngRoll <= 95 then
 				tear:AddTearFlags(TearFlags.TEAR_LASER)	
 			end
@@ -1265,12 +1248,12 @@ end
 function TrinketStacking:onRedChestOpen(pickup, ent, bool)
 	if ent.Type == EntityType.ENTITY_PLAYER and pickup:GetData().LHAND_CHECK == nil then
 		pickup:GetData().LHAND_CHECK = 1
-		player = ent:ToPlayer()
+		local player = ent:ToPlayer()
 		--Left Hand
 		if player:GetTrinketMultiplier(TrinketType.TRINKET_LEFT_HAND) > 1 then
-			rng = player:GetTrinketRNG(TrinketType.TRINKET_LEFT_HAND)
-			rngRoll = rng:RandomInt(100)
-			rngChance = (5 + 15 * (player:GetTrinketMultiplier(TrinketType.TRINKET_LEFT_HAND) - 1) )
+			local rng = player:GetTrinketRNG(TrinketType.TRINKET_LEFT_HAND)
+			local rngRoll = rng:RandomInt(100)
+			local rngChance = (5 + 15 * (player:GetTrinketMultiplier(TrinketType.TRINKET_LEFT_HAND) - 1) )
 			--print("Roll: " .. rngRoll .. "|" .. rngChance)	
 			if rngRoll <= rngChance then 
 				Isaac.Spawn(EntityType.ENTITY_PICKUP, PickupVariant.PICKUP_HEART, HeartSubType.HEART_BLACK, pickup.Position, Vector(-5 + rng:RandomInt(10),-5 + rng:RandomInt(10) ), player)	
@@ -1298,7 +1281,7 @@ local questItemIDs = {
 }
 function TrinketStacking:onStrangeKeyCheck(pickup)
 	for i = 1, game:GetNumPlayers() do
-		player = game:GetPlayer(i)
+		local player = game:GetPlayer(i)
 		local canReplace = true
 		local checkedSize = 0
 		if player:GetTrinketMultiplier(TrinketType.TRINKET_STRANGE_KEY) > 1 then
@@ -1321,9 +1304,9 @@ function TrinketStacking:onStrangeKeyCheck(pickup)
 			--Try to replace the item
 			if canReplace then
 				GameState.PANDORAS_BOX_CHECKED[checkedSize + 1] = pickup.SubType
-				rng = player:GetTrinketRNG(TrinketType.TRINKET_STRANGE_KEY)
-				rngRoll = rng:RandomInt(100)
-				rngChance = 5 + 5 * (player:GetTrinketMultiplier(TrinketType.TRINKET_STRANGE_KEY) - 1)
+				local rng = player:GetTrinketRNG(TrinketType.TRINKET_STRANGE_KEY)
+				local rngRoll = rng:RandomInt(100)
+				local rngChance = 5 + 5 * (player:GetTrinketMultiplier(TrinketType.TRINKET_STRANGE_KEY) - 1)
 				--print("Strange key roll: " .. rngRoll .. "|" .. rngChance)
 				if rngRoll <= rngChance then
 					--print("Transform into pandoras box!")
@@ -1338,12 +1321,12 @@ end
 function TrinketStacking.onTeleporter(item, tpRng, user, flags, slot, data)
 	--print("TELEPORTER USED")
 	for i = 1, game:GetNumPlayers() do
-		player = game:GetPlayer(i)
+		local player = game:GetPlayer(i)
 		if player:GetTrinketMultiplier(TrinketType.TRINKET_BROKEN_REMOTE) > 1 then
 			--print("Detect broken remote")
-			rng = player:GetTrinketRNG(TrinketType.TRINKET_BROKEN_REMOTE)
-			rngRoll = rng:RandomInt(100)
-			rngChance = 10 + 25 * player:GetTrinketMultiplier(TrinketType.TRINKET_BROKEN_REMOTE)
+			local rng = player:GetTrinketRNG(TrinketType.TRINKET_BROKEN_REMOTE)
+			local rngRoll = rng:RandomInt(100)
+			local rngChance = 10 + 25 * player:GetTrinketMultiplier(TrinketType.TRINKET_BROKEN_REMOTE)
 			--print("B remote roll: " .. rngRoll .. "|" .. rngChance)
 			if rngRoll <= rngChance then
 				player:UseActiveItem(CollectibleType.COLLECTIBLE_TELEPORT_2)
