@@ -123,7 +123,7 @@ if EID then
 	--Check to see if the EID description should be displayed
 	local function TrinketStackingPlusCondition(descObj)
 		for key, item in pairs(trinketInfo) do
-			currID = tonumber(key)
+			local currID = tonumber(key)
 			if (descObj.ObjSubType == currID or descObj.ObjSubType == currID  + 32768) and descObj.ObjType == 5 and descObj.ObjVariant == PickupVariant.PICKUP_TRINKET then
 				--Gold trinket Check
 				if descObj.ObjSubType == currID  + 32768  then
@@ -149,12 +149,12 @@ if EID then
 	--Append the trinket's custom description 
 	local function TrinketStackingPlusCallback(descObj)
 		EID:appendToDescription(descObj, "#{{Collectible439}} Stacking+: ")
-		trinketID = descObj.ObjSubType
+		local trinketID = descObj.ObjSubType
 		if descObj.ObjSubType > 32768 then
 			trinketID = descObj.ObjSubType - 32768
 		end
 		trinketID = tostring(trinketID)
-		stackingDesc = trinketInfo[trinketID].Desc
+		local stackingDesc = trinketInfo[trinketID].Desc
 		EID:appendToDescription(descObj, stackingDesc)
 
 		return descObj

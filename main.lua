@@ -678,7 +678,7 @@ function TrinketStacking:onCacheEval(player, cacheFlag)
 		if cacheFlag == CacheFlag.CACHE_FIREDELAY then
 			--Apply Rainbow worm
 			if cacheUpdateTrinkets["Rainbow Worm"].playerFlags[pNum] >= 2 then
-				rWormBoost = Helpers:getTearBoost(1 + (1.5 * (player:GetTrinketMultiplier(TrinketType.TRINKET_RAINBOW_WORM) - 1)), player.MaxFireDelay, MAX_TEARS)
+				local rWormBoost = Helpers:getTearBoost(1 + (1.5 * (player:GetTrinketMultiplier(TrinketType.TRINKET_RAINBOW_WORM) - 1)), player.MaxFireDelay, MAX_TEARS)
 				player.MaxFireDelay = player.MaxFireDelay - rWormBoost
 			
 			end	

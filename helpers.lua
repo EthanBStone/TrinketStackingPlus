@@ -29,7 +29,7 @@ end
 
 --Helper function for equality
 function Helpers:getLowestConsumable()
-	player = game:GetPlayer(1)
+	local player = game:GetPlayer(1)
 	local consumables = {
 		{variant = PickupVariant.PICKUP_BOMB,count = player:GetNumBombs()},
 		{variant = PickupVariant.PICKUP_KEY, count = player:GetNumKeys()},
@@ -63,11 +63,11 @@ end
 
 --Code for Isaac's Head and ???'s Soul
 function Helpers:updateTrinketFamiliars()
-	famCount = 2 --Amount of familiars in the following tables. ???'s soul + isaac's head = 2
-	familiarTrinket = {TrinketType.TRINKET_SOUL, TrinketType.TRINKET_ISAACS_HEAD}
-	familiarVariants = {FamiliarVariant.BLUE_BABY_SOUL, FamiliarVariant.ISAACS_HEAD}
+	local famCount = 2 --Amount of familiars in the following tables. ???'s soul + isaac's head = 2
+	local familiarTrinket = {TrinketType.TRINKET_SOUL, TrinketType.TRINKET_ISAACS_HEAD}
+	local familiarVariants = {FamiliarVariant.BLUE_BABY_SOUL, FamiliarVariant.ISAACS_HEAD}
 	for pNum = 1, game:GetNumPlayers() do
-		player = game:GetPlayer(pNum)
+		local player = game:GetPlayer(pNum)
 		for i = 1, famCount do 
 			if player:GetTrinketMultiplier(familiarTrinket[i]) > 1 then
 				--Remove all extra spawns of the familiars
@@ -77,8 +77,8 @@ function Helpers:updateTrinketFamiliars()
 					end
 				end
 				for j = 1, (player:GetTrinketMultiplier(familiarTrinket[i]) - 1) do
-					rng = player:GetTrinketRNG(familiarTrinket[i])
-					rngRoll = rng:RandomInt(100)			
+					local rng = player:GetTrinketRNG(familiarTrinket[i])
+					local rngRoll = rng:RandomInt(100)			
 					local spawnedFamiliar = Isaac.Spawn(EntityType.ENTITY_FAMILIAR, familiarVariants[i], 0, player.Position + Vector(-5 + rng:RandomInt(10),-5 + rng:RandomInt(10)) , Vector(-20 + rng:RandomInt(40),-20 + rng:RandomInt(40)), player )
 					spawnedFamiliar:GetData().StackedSpawn = pNum				
 				end
