@@ -131,7 +131,7 @@ if EID then
 				end		
 				--Check to see if the player has Moms Box or multiple stacks of the trinket
 				for i = 1, game:GetNumPlayers() do
-					player = game:GetPlayer(i)
+					local player = game:GetPlayer(i)
 					--Check to see if player has multiple stacks of the trinket
 					if player:GetTrinketMultiplier(currID) >= 1 then
 						return true
